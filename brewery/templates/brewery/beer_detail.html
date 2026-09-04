@@ -1,0 +1,18 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}{{ beer.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ beer.name }}</h1>
+<p><strong>Стиль:</strong> {{ beer.style|default:"—" }}</p>
+<p><strong>Крепость:</strong> {{ beer.abv|default:"—" }}%</p>
+<p><strong>IBU:</strong> {{ beer.ibu|default:"—" }}</p>
+<p><strong>Производитель:</strong> {{ beer.vendor|default:"—" }}</p>
+<p><strong>Описание:</strong> {{ beer.description|default:"—" }}</p>
+<p><strong>Хмель:</strong>
+    {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+</p>
+<p><a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
+   <a href="{% url 'beer_delete' beer.pk %}">Удалить</a> |
+   <a href="{% url 'beer_list' %}">Назад</a></p>
+{% endblock %}

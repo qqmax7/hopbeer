@@ -1,0 +1,13 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Удаление хмеля{% endblock %}
+
+{% block content %}
+<h1>Удалить «{{ hop.name }}»?</h1>
+<p>Это действие нельзя отменить.</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Удалить</button>
+</form>
+<p><a href="{% url 'hop_list' %}">Отмена</a></p>
+{% endblock %}

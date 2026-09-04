@@ -1,0 +1,29 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Системы{% endblock %}
+
+{% block content %}
+<h1>Системы</h1>
+<a class="button" href="{% url 'systemm2m_create' %}">Добавить систему</a>
+<table>
+    <tr>
+        <th>Название</th>
+        <th>Пиво</th>
+        <th>Действия</th>
+    </tr>
+    {% for system in systems %}
+    <tr>
+        <td>{{ system.name }}</td>
+        <td>
+            {% for beer in system.beers.all %}{{ beer.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        </td>
+        <td>
+            <a href="{% url 'systemm2m_update' system.pk %}">Изменить</a> |
+            <a href="{% url 'systemm2m_delete' system.pk %}">Удалить</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">Пока нет записей.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

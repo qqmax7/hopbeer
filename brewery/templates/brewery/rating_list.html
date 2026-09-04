@@ -1,0 +1,31 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Оценки{% endblock %}
+
+{% block content %}
+<h1>Оценки</h1>
+<a class="button" href="{% url 'rating_create' %}">Добавить оценку</a>
+<table>
+    <tr>
+        <th>Пиво</th>
+        <th>Оценка</th>
+        <th>Комментарий</th>
+        <th>Дата</th>
+        <th>Действия</th>
+    </tr>
+    {% for rating in ratings %}
+    <tr>
+        <td>{{ rating.beer }}</td>
+        <td>{{ rating.score }}/10</td>
+        <td>{{ rating.comment|default:"—" }}</td>
+        <td>{{ rating.created_at|date:"d.m.Y H:i" }}</td>
+        <td>
+            <a href="{% url 'rating_update' rating.pk %}">Изменить</a> |
+            <a href="{% url 'rating_delete' rating.pk %}">Удалить</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Пока нет записей.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Система — форма{% endblock %}
+
+{% block content %}
+<h1>{% if form.instance.pk %}Изменить{% else %}Добавить{% endif %} систему</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Сохранить</button>
+</form>
+<p><a href="{% url 'systemm2m_list' %}">Назад</a></p>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Пиво{% endblock %}
+
+{% block content %}
+<h1>Пиво</h1>
+<a class="button" href="{% url 'beer_create' %}">Добавить пиво</a>
+<table>
+    <tr>
+        <th>Название</th>
+        <th>Стиль</th>
+        <th>Крепость</th>
+        <th>IBU</th>
+        <th>Производитель</th>
+        <th>Действия</th>
+    </tr>
+    {% for beer in beers %}
+    <tr>
+        <td><a href="{% url 'beer_detail' beer.pk %}">{{ beer.name }}</a></td>
+        <td>{{ beer.style }}</td>
+        <td>{{ beer.abv }}</td>
+        <td>{{ beer.ibu }}</td>
+        <td>{{ beer.vendor|default:"—" }}</td>
+        <td>
+            <a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
+            <a href="{% url 'beer_delete' beer.pk %}">Удалить</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">Пока нет записей.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

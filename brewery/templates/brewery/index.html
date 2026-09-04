@@ -1,0 +1,15 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Главная — Пивоварня{% endblock %}
+
+{% block content %}
+<h1>Пивоварня</h1>
+<p>База данных пива, хмеля, производителей и оценок.</p>
+<ul>
+    <li><a href="{% url 'beer_list' %}">Пиво ({{ beer_count }})</a></li>
+    <li><a href="{% url 'hop_list' %}">Хмель ({{ hop_count }})</a></li>
+    <li><a href="{% url 'vendor_list' %}">Производители ({{ vendor_count }})</a></li>
+    <li><a href="{% url 'rating_list' %}">Оценки ({{ rating_count }})</a></li>
+    <li><a href="{% url 'systemm2m_list' %}">Системы ({{ system_count }})</a></li>
+</ul>
+{% endblock %}

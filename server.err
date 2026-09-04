@@ -1,0 +1,12 @@
+Watching for file changes with StatReloader
+[04/Sep/2026 17:54:33] "GET / HTTP/1.1" 200 1026
+[04/Sep/2026 17:54:36] "GET /beers/ HTTP/1.1" 200 981
+[04/Sep/2026 17:54:36] "GET /hops/ HTTP/1.1" 200 932
+[04/Sep/2026 17:54:36] "GET /vendors/ HTTP/1.1" 200 966
+[04/Sep/2026 17:54:36] "GET /ratings/ HTTP/1.1" 200 956
+[04/Sep/2026 17:54:36] "GET /systems/ HTTP/1.1" 200 900
+[04/Sep/2026 17:54:36] "GET /beers/create/ HTTP/1.1" 200 2085
+[04/Sep/2026 17:54:36] "GET /hops/create/ HTTP/1.1" 200 1432
+[04/Sep/2026 17:54:36] "GET /vendors/create/ HTTP/1.1" 200 1439
+[04/Sep/2026 17:54:36] "GET /ratings/create/ HTTP/1.1" 200 1468
+[04/Sep/2026 17:54:36] "GET /systems/create/ HTTP/1.1" 200 1233
