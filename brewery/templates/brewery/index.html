@@ -5,10 +5,10 @@
 {% block content %}
 <h1>Пивоварня</h1>
 <p>База данных пива, хмеля, производителей и оценок.</p>
-<ul>
-    <li><a href="{% url 'beer_list' %}">Пиво ({{ beer_count }})</a></li>
-    <li><a href="{% url 'hop_list' %}">Хмель ({{ hop_count }})</a></li>
-    <li><a href="{% url 'vendor_list' %}">Производители ({{ vendor_count }})</a></li>
-    <li><a href="{% url 'rating_list' %}">Оценки ({{ rating_count }})</a></li>
+<ul class="card-list">
+    <li class="card"><h3><a href="{% url 'beer_list' %}">Пиво</a></h3><p class="meta">{{ beer_count }} записей</p></li>
+    <li class="card"><h3><a href="{% url 'hop_list' %}">Хмель</a></h3><p class="meta">{{ hop_count }} записей</p></li>
+    <li class="card"><h3><a href="{% url 'vendor_list' %}">Производители</a></h3><p class="meta">{{ vendor_count }} записей</p></li>
+    <li class="card"><h3><a href="{% url 'rating_list' %}">Оценки</a></h3><p class="meta">{{ rating_count }} записей</p></li>
 </ul>
 {% endblock %}

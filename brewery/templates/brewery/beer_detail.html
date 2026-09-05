@@ -4,15 +4,19 @@
 
 {% block content %}
 <h1>{{ beer.name }}</h1>
-<p><strong>Стиль:</strong> {{ beer.style|default:"—" }}</p>
-<p><strong>Крепость:</strong> {{ beer.abv|default:"—" }}%</p>
-<p><strong>IBU:</strong> {{ beer.ibu|default:"—" }}</p>
-<p><strong>Производитель:</strong> {{ beer.vendor|default:"—" }}</p>
-<p><strong>Описание:</strong> {{ beer.description|default:"—" }}</p>
-<p><strong>Хмель:</strong>
-    {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+<div class="detail">
+    <div class="detail-row"><span class="label">Стиль</span><span class="value">{{ beer.style|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">Крепость</span><span class="value">{{ beer.abv|default:"—" }}%</span></div>
+    <div class="detail-row"><span class="label">IBU</span><span class="value">{{ beer.ibu|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">OG</span><span class="value">{{ beer.og|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">Цена/качество</span><span class="value">{{ beer.value_deal|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">ГОСТ</span><span class="value">{{ beer.gost|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">Производитель</span><span class="value">{{ beer.vendor|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">Описание</span><span class="value">{{ beer.description|default:"—" }}</span></div>
+    <div class="detail-row"><span class="label">Хмель</span><span class="value">{% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>
+</div>
+<p>
+    <a class="button" href="{% url 'beer_update' beer.pk %}">Изменить</a>
+    <a class="button danger" href="{% url 'beer_delete' beer.pk %}">Удалить</a>
 </p>
-<p><a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
-   <a href="{% url 'beer_delete' beer.pk %}">Удалить</a> |
-   <a href="{% url 'beer_list' %}">Назад</a></p>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Вход — Пивоварня{% endblock %}
+
+{% block content %}
+<h1>Вход</h1>
+{% if form.errors %}
+<p class="error">Неверное имя пользователя или пароль.</p>
+{% endif %}
+<form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    <div class="field">
+        <label for="{{ form.username.id_for_label }}">Имя пользователя</label>
+        {{ form.username }}
+    </div>
+    <div class="field">
+        <label for="{{ form.password.id_for_label }}">Пароль</label>
+        {{ form.password }}
+    </div>
+    <button type="submit">Войти</button>
+</form>
+<p><a href="{% url 'index' %}">На главную</a></p>
+{% endblock %}

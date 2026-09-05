@@ -6,3 +6,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('brewery.urls')),
 ]
+
+urlpatterns += [
+    path('accounts/', include('django.contrib.auth.urls')),
+]

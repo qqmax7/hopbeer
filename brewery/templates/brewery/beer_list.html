@@ -4,34 +4,35 @@
 
 {% block content %}
 <h1>Пиво</h1>
-<a class="button" href="{% url 'beer_create' %}">Добавить пиво</a>
-<table>
-    <tr>
-        <th>Название</th>
-        <th>Стиль</th>
-        <th>Крепость</th>
-        <th>IBU</th>
-        <th>Производитель</th>
-        <th>Хмель</th>
-        <th>Действия</th>
-    </tr>
+<div class="list-actions">
+    <a class="button" href="{% url 'beer_create' %}">Добавить пиво</a>
+</div>
+<ul class="card-list">
     {% for beer in beers %}
-    <tr>
-        <td><a href="{% url 'beer_detail' beer.pk %}">{{ beer.name }}</a></td>
-        <td>{{ beer.style }}</td>
-        <td>{{ beer.abv }}</td>
-        <td>{{ beer.ibu }}</td>
-        <td>{{ beer.vendor|default:"—" }}</td>
-        <td>
-            {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
-        </td>
-        <td>
+    <li class="card">
+        <h3><a href="{% url 'beer_detail' beer.pk %}">{{ beer.name }}</a></h3>
+        <div class="meta">
+            <span>{{ beer.style|default:"—" }}</span>
+            <span>{{ beer.abv|floatformat:1|default:"—" }}%</span>
+            <span>IBU {{ beer.ibu|default:"—" }}</span>
+            <span>OG {{ beer.og|default:"—" }}</span>
+            <span>Ц/к {{ beer.value_deal|default:"—" }}</span>
+            {% if beer.gost %}<span>ГОСТ {{ beer.gost }}</span>{% endif %}
+        </div>
+        {% if beer.description %}<p>{{ beer.description }}</p>{% endif %}
+        {% if beer.vendor %}<p class="meta">Производитель: {{ beer.vendor }}</p>{% endif %}
+        {% if beer.hops.all %}
+        <p class="meta">Хмель:
+            {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% endif %}
+        <div class="actions">
             <a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
             <a href="{% url 'beer_delete' beer.pk %}">Удалить</a>
-        </td>
-    </tr>
+        </div>
+    </li>
     {% empty %}
-    <tr><td colspan="7">Пока нет записей.</td></tr>
+    <li class="empty">Пока нет записей.</li>
     {% endfor %}
-</table>
+</ul>
 {% endblock %}

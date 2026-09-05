@@ -9,16 +9,35 @@
 </head>
 <body>
 <header>
-    <nav>
-        <a href="{% url 'index' %}">Главная</a>
-        <a href="{% url 'beer_list' %}">Пиво</a>
-        <a href="{% url 'hop_list' %}">Хмель</a>
-        <a href="{% url 'vendor_list' %}">Производители</a>
-        <a href="{% url 'rating_list' %}">Оценки</a>
-    </nav>
+        {% if request.resolver_match.url_name != 'index' %}
+        <a class="back-link" href="javascript:history.back()">← Назад</a>
+        {% endif %}
+        {% block back_link %}{% endblock %}
+        <details class="nav-details">
+            <summary>Меню</summary>
+            <nav>
+                <a href="{% url 'index' %}">Главная</a>
+                <a href="{% url 'beer_list' %}">Пиво</a>
+                <a href="{% url 'hop_list' %}">Хмель</a>
+                <a href="{% url 'vendor_list' %}">Производители</a>
+                <a href="{% url 'rating_list' %}">Оценки</a>
+            </nav>
+        </details>
+        <div class="user-area">
+            {% if user.is_authenticated %}
+                <span class="user-name">{{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-link">Выйти</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="login-link">Войти</a>
+            {% endif %}
+        </div>
 </header>
 <main>
     {% block content %}{% endblock %}
 </main>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

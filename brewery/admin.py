@@ -6,13 +6,13 @@ from .models import Beer, Hop, Rating, Vendor
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'country', 'website')
+    list_display = ('name', 'country', 'website', 'city', 'description')
     search_fields = ('name', 'country')
 
 
 @admin.register(Hop)
 class HopAdmin(admin.ModelAdmin):
-    list_display = ('name', 'alpha_acid')
+    list_display = ('name', 'alpha_acid', 'country', 'year')
     search_fields = ('name',)
 
 
@@ -23,7 +23,7 @@ class RatingInline(admin.TabularInline):
 
 @admin.register(Beer)
 class BeerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'style', 'abv', 'ibu', 'vendor')
+    list_display = ('name', 'style', 'abv', 'ibu', 'og', 'value_deal', 'gost', 'vendor')
     list_filter = ('style', 'vendor')
     search_fields = ('name', 'style')
     filter_horizontal = ('hops',)

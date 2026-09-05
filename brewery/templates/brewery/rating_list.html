@@ -4,28 +4,25 @@
 
 {% block content %}
 <h1>Оценки</h1>
-<a class="button" href="{% url 'rating_create' %}">Добавить оценку</a>
-<table>
-    <tr>
-        <th>Пиво</th>
-        <th>Оценка</th>
-        <th>Комментарий</th>
-        <th>Дата</th>
-        <th>Действия</th>
-    </tr>
+<div class="list-actions">
+    <a class="button" href="{% url 'rating_create' %}">Добавить оценку</a>
+</div>
+<ul class="card-list">
     {% for rating in ratings %}
-    <tr>
-        <td>{{ rating.beer }}</td>
-        <td>{{ rating.score }}/10</td>
-        <td>{{ rating.comment|default:"—" }}</td>
-        <td>{{ rating.created_at|date:"d.m.Y H:i" }}</td>
-        <td>
+    <li class="card">
+        <h3>{{ rating.beer }}</h3>
+        <div class="meta">
+            <span>{{ rating.score }}/10</span>
+            <span>{{ rating.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        {% if rating.comment %}<p class="meta">{{ rating.comment }}</p>{% endif %}
+        <div class="actions">
             <a href="{% url 'rating_update' rating.pk %}">Изменить</a> |
             <a href="{% url 'rating_delete' rating.pk %}">Удалить</a>
-        </td>
-    </tr>
+        </div>
+    </li>
     {% empty %}
-    <tr><td colspan="5">Пока нет записей.</td></tr>
+    <li class="empty">Пока нет записей.</li>
     {% endfor %}
-</table>
+</ul>
 {% endblock %}

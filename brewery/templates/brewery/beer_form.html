@@ -4,10 +4,155 @@
 
 {% block content %}
 <h1>{% if form.instance.pk %}Изменить{% else %}Добавить{% endif %} пиво</h1>
-<form method="post">
+<form method="post" id="beer-form">
     {% csrf_token %}
-    {{ form.as_p }}
+    <div id="hops-hidden" data-name="hops">{{ form.hops }}</div>
+
+    <div class="field">
+        <label for="{{ form.name.id_for_label }}">Название</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+    </div>
+    <div class="field">
+        <label for="{{ form.style.id_for_label }}">Стиль</label>
+        {{ form.style }}
+    </div>
+    <div class="field">
+        <label for="{{ form.abv.id_for_label }}">Крепость, %</label>
+        {{ form.abv }}
+    </div>
+    <div class="field">
+        <label for="{{ form.ibu.id_for_label }}">IBU</label>
+        {{ form.ibu }}
+    </div>
+    <div class="field">
+        <label for="{{ form.og.id_for_label }}">OG</label>
+        {{ form.og }}
+    </div>
+    <div class="field">
+        <label for="{{ form.value_deal.id_for_label }}">Цена/качество</label>
+        {{ form.value_deal }}
+    </div>
+    <div class="field">
+        <label for="{{ form.gost.id_for_label }}">ГОСТ</label>
+        {{ form.gost }}
+    </div>
+    <div class="field">
+        <label for="{{ form.description.id_for_label }}">Описание</label>
+        {{ form.description }}
+    </div>
+    <div class="field">
+        <label for="{{ form.vendor.id_for_label }}">Производитель</label>
+        {{ form.vendor }}
+    </div>
+
+    <div class="field hops-picker">
+        <label>Хмель</label>
+        <input type="search" id="hops-search" class="form-control" placeholder="Найти хмель…" autocomplete="off">
+        <div id="hops-selected" class="hops-tags"></div>
+        <div id="hops-results" class="hops-results"></div>
+    </div>
+
     <button type="submit">Сохранить</button>
 </form>
-<p><a href="{% url 'beer_list' %}">Назад</a></p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    // Все сорта хмеля: id -> название (сервер отдаёт через data-атрибуты).
+    var hiddenContainer = document.getElementById('hops-hidden');
+    var search = document.getElementById('hops-search');
+    var selectedBox = document.getElementById('hops-selected');
+    var resultsBox = document.getElementById('hops-results');
+
+    // Данные всех сортов (для поиска). Загружаем через JSON из url.
+    // Список сортов хмеля вставляем серверным тегом.
+    var HOP_OPTIONS = {{ hops_json|safe }};
+    var selected = new Set();
+
+    // При редактировании форма уже содержит скрытые input[name=hops] — читаем их.
+    hiddenContainer.querySelectorAll('input[name="hops"]').forEach(function (inp) {
+        if (inp.value) selected.add(inp.value);
+    });
+
+    // Синхронизировать скрытые поля: несколько input[name=hops] со значениями pk.
+    function syncHidden() {
+        hiddenContainer.innerHTML = '';
+        var name = hiddenContainer.getAttribute('data-name');
+        selected.forEach(function (id) {
+            var inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = name;
+            inp.value = id;
+            hiddenContainer.appendChild(inp);
+        });
+    }
+
+
+    function renderSelected() {
+        selectedBox.innerHTML = '';
+        selected.forEach(function (id) {
+            var hop = HOP_OPTIONS.find(function (h) { return String(h.id) === id; });
+            if (!hop) return;
+            var chip = document.createElement('span');
+            chip.className = 'hop-chip';
+            chip.textContent = hop.name;
+            chip.addEventListener('click', function () {
+                selected.delete(id);
+                syncHidden();
+                renderSelected();
+                search.focus();
+            });
+            selectedBox.appendChild(chip);
+        });
+        syncHidden();
+    }
+
+    function renderResults(query) {
+        resultsBox.innerHTML = '';
+        if (!query) return;
+        var q = query.toLowerCase();
+        var matches = HOP_OPTIONS.filter(function (h) {
+            return !selected.has(String(h.id)) && h.name.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 14);
+        if (!matches.length) {
+            var none = document.createElement('div');
+            none.className = 'hops-none';
+            none.textContent = 'Ничего не найдено';
+            resultsBox.appendChild(none);
+            return;
+        }
+        matches.forEach(function (hop) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'hops-result';
+            item.textContent = hop.name;
+            item.addEventListener('click', function () {
+                selected.add(String(hop.id));
+                syncHidden();
+                renderSelected();
+                renderResults(search.value);
+            });
+            resultsBox.appendChild(item);
+        });
+    }
+
+    search.addEventListener('input', function () { renderResults(search.value); });
+    search.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            // Запрещаем submit формы при нажатии Enter в поиске.
+            e.preventDefault();
+        }
+    });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.hops-picker')) {
+            resultsBox.innerHTML = '';
+        }
+    });
+
+    renderSelected();
+    syncHidden();
+})();
+</script>
 {% endblock %}

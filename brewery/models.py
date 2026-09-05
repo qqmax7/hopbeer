@@ -10,6 +10,8 @@ class Vendor(models.Model):
 
     name = models.CharField('Название', max_length=200)
     country = models.CharField('Страна', max_length=100, blank=True)
+    city = models.CharField('Город', max_length=100, blank=True)
+    description = models.TextField('Описание', blank=True)
     website = models.URLField('Сайт', blank=True)
 
     class Meta:
@@ -29,6 +31,8 @@ class Hop(models.Model):
         'Альфа-кислота, %', max_digits=4, decimal_places=2, null=True, blank=True
     )
     aroma = models.TextField('Аромат', blank=True)
+    country = models.CharField('Страна', max_length=100, blank=True)
+    year = models.PositiveSmallIntegerField('Год', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Хмель'
@@ -49,6 +53,11 @@ class Beer(models.Model):
     )
     ibu = models.PositiveIntegerField('IBU', null=True, blank=True)
     description = models.TextField('Описание', blank=True)
+    og = models.PositiveIntegerField('OG', null=True, blank=True)
+    value_deal = models.DecimalField(
+        'Цена/качество', max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    gost = models.CharField('ГОСТ', max_length=100, blank=True)
     vendor = models.ForeignKey(
         Vendor,
         verbose_name='Производитель',

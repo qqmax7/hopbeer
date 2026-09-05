@@ -4,26 +4,26 @@
 
 {% block content %}
 <h1>Производители</h1>
-<a class="button" href="{% url 'vendor_create' %}">Добавить производителя</a>
-<table>
-    <tr>
-        <th>Название</th>
-        <th>Страна</th>
-        <th>Сайт</th>
-        <th>Действия</th>
-    </tr>
+<div class="list-actions">
+    <a class="button" href="{% url 'vendor_create' %}">Добавить производителя</a>
+</div>
+<ul class="card-list">
     {% for vendor in vendors %}
-    <tr>
-        <td>{{ vendor.name }}</td>
-        <td>{{ vendor.country|default:"—" }}</td>
-        <td>{% if vendor.website %}<a href="{{ vendor.website }}">{{ vendor.website }}</a>{% else %}—{% endif %}</td>
-        <td>
+    <li class="card">
+        <h3>{{ vendor.name }}</h3>
+        <div class="meta">
+            <span>{{ vendor.country|default:"—" }}</span>
+            {% if vendor.city %}<span>{{ vendor.city }}</span>{% endif %}
+            {% if vendor.website %}<span><a href="{{ vendor.website }}">{{ vendor.website }}</a></span>{% endif %}
+        </div>
+        {% if vendor.description %}<p class="meta">{{ vendor.description }}</p>{% endif %}
+        <div class="actions">
             <a href="{% url 'vendor_update' vendor.pk %}">Изменить</a> |
             <a href="{% url 'vendor_delete' vendor.pk %}">Удалить</a>
-        </td>
-    </tr>
+        </div>
+    </li>
     {% empty %}
-    <tr><td colspan="4">Пока нет записей.</td></tr>
+    <li class="empty">Пока нет записей.</li>
     {% endfor %}
-</table>
+</ul>
 {% endblock %}
