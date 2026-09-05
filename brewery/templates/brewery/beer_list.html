@@ -12,6 +12,7 @@
         <th>Крепость</th>
         <th>IBU</th>
         <th>Производитель</th>
+        <th>Хмель</th>
         <th>Действия</th>
     </tr>
     {% for beer in beers %}
@@ -22,12 +23,15 @@
         <td>{{ beer.ibu }}</td>
         <td>{{ beer.vendor|default:"—" }}</td>
         <td>
+            {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        </td>
+        <td>
             <a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
             <a href="{% url 'beer_delete' beer.pk %}">Удалить</a>
         </td>
     </tr>
     {% empty %}
-    <tr><td colspan="6">Пока нет записей.</td></tr>
+    <tr><td colspan="7">Пока нет записей.</td></tr>
     {% endfor %}
 </table>
 {% endblock %}

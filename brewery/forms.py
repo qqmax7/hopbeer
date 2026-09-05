@@ -37,7 +37,7 @@ class BeerForm(forms.ModelForm):
             'ibu': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'vendor': forms.Select(attrs={'class': 'form-control'}),
-            'hops': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'hops': forms.CheckboxSelectMultiple(attrs={'class': 'form-control'}),
         }
 
 
