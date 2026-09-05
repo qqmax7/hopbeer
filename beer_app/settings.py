@@ -4,16 +4,17 @@ Django settings for beer_app project.
 Адаптировано под SQLite (локальная разработка) вместо Supabase/PostgreSQL.
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# В продакшене обязательно задавайте SECRET_KEY через переменную окружения
-SECRET_KEY = 'django-insecure-(&3r!p+3ty0k6cp+3&%27a)z-mp+ymc91d'  # local dev only
+# Безопасность: в продакшене SECRET_KEY, DEBUG и ALLOWED_HOSTS задаются через окружение
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-(&3r!p+3ty0k6cp+3&%27a)z-mp+ymc91d')
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -95,6 +96,20 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise — отдача статики в продакшене без nginx
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+
+# Безопасность
+CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS') else []
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False') == 'True'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
