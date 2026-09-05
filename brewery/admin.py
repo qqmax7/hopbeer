@@ -1,7 +1,7 @@
 """Регистрация моделей в админке Django."""
 from django.contrib import admin
 
-from .models import Beer, Hop, Rating, SystemM2M, Vendor
+from .models import Beer, Hop, Rating, Vendor
 
 
 @admin.register(Vendor)
@@ -34,9 +34,3 @@ class BeerAdmin(admin.ModelAdmin):
 class RatingAdmin(admin.ModelAdmin):
     list_display = ('beer', 'score', 'created_at')
     list_filter = ('score',)
-
-
-@admin.register(SystemM2M)
-class SystemM2MAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    filter_horizontal = ('beers',)

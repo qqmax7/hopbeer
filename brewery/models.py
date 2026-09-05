@@ -87,20 +87,3 @@ class Rating(models.Model):
 
     def __str__(self):
         return f'{self.beer} — {self.score}/10'
-
-
-class SystemM2M(models.Model):
-    """Служебная модель для демонстрации связи «многие ко многим»."""
-
-    name = models.CharField('Название', max_length=200)
-    beers = models.ManyToManyField(
-        Beer, verbose_name='Пиво', blank=True, related_name='systems'
-    )
-
-    class Meta:
-        verbose_name = 'Система'
-        verbose_name_plural = 'Системы'
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name

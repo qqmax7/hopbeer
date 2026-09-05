@@ -1,7 +1,7 @@
 """Формы приложения brewery."""
 from django import forms
 
-from .models import Beer, Hop, Rating, SystemM2M, Vendor
+from .models import Beer, Hop, Rating, Vendor
 
 
 class VendorForm(forms.ModelForm):
@@ -51,12 +51,3 @@ class RatingForm(forms.ModelForm):
             'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-
-class SystemM2MForm(forms.ModelForm):
-    class Meta:
-        model = SystemM2M
-        fields = ['name', 'beers']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'beers': forms.SelectMultiple(attrs={'class': 'form-control'}),
-        }

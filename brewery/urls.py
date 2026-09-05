@@ -30,10 +30,4 @@ urlpatterns = [
     path('ratings/create/', views.RatingCreateView.as_view(), name='rating_create'),
     path('ratings/<int:pk>/edit/', views.RatingUpdateView.as_view(), name='rating_update'),
     path('ratings/<int:pk>/delete/', views.RatingDeleteView.as_view(), name='rating_delete'),
-
-    # SystemM2M
-    path('systems/', views.SystemM2MListView.as_view(), name='systemm2m_list'),
-    path('systems/create/', views.SystemM2MCreateView.as_view(), name='systemm2m_create'),
-    path('systems/<int:pk>/edit/', views.SystemM2MUpdateView.as_view(), name='systemm2m_update'),
-    path('systems/<int:pk>/delete/', views.SystemM2MDeleteView.as_view(), name='systemm2m_delete'),
 ]

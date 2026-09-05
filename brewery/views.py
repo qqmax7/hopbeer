@@ -3,8 +3,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from .forms import BeerForm, HopForm, RatingForm, SystemM2MForm, VendorForm
-from .models import Beer, Hop, Rating, SystemM2M, Vendor
+from .forms import BeerForm, HopForm, RatingForm, VendorForm
+from .models import Beer, Hop, Rating, Vendor
 
 
 # ---------- Vendor ----------
@@ -121,33 +121,6 @@ class RatingDeleteView(DeleteView):
     success_url = reverse_lazy('rating_list')
 
 
-# ---------- SystemM2M ----------
-class SystemM2MListView(ListView):
-    model = SystemM2M
-    template_name = 'brewery/systemm2m_list.html'
-    context_object_name = 'systems'
-
-
-class SystemM2MCreateView(CreateView):
-    model = SystemM2M
-    form_class = SystemM2MForm
-    template_name = 'brewery/systemm2m_form.html'
-    success_url = reverse_lazy('systemm2m_list')
-
-
-class SystemM2MUpdateView(UpdateView):
-    model = SystemM2M
-    form_class = SystemM2MForm
-    template_name = 'brewery/systemm2m_form.html'
-    success_url = reverse_lazy('systemm2m_list')
-
-
-class SystemM2MDeleteView(DeleteView):
-    model = SystemM2M
-    template_name = 'brewery/systemm2m_confirm_delete.html'
-    success_url = reverse_lazy('systemm2m_list')
-
-
 # ---------- Главная ----------
 def index(request):
     """Главная страница со ссылками на все разделы."""
@@ -156,5 +129,4 @@ def index(request):
         'hop_count': Hop.objects.count(),
         'vendor_count': Vendor.objects.count(),
         'rating_count': Rating.objects.count(),
-        'system_count': SystemM2M.objects.count(),
     })
