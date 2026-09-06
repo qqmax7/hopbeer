@@ -1,0 +1,19 @@
+[Unit]
+Description=Hopbeer Django app (gunicorn)
+After=network.target
+
+[Service]
+Type=notify
+User=root
+Group=root
+WorkingDirectory=/opt/hopbeer
+EnvironmentFile=/opt/hopbeer/.env
+ExecStart=/opt/hopbeer/venv/bin/gunicorn beer_app.wsgi:application \
+    --bind 127.0.0.1:8000 \
+    --workers 2 \
+    --timeout 120
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
