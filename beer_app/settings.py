@@ -7,12 +7,21 @@ Django settings for beer_app project.
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Безопасность: в продакшене SECRET_KEY, DEBUG и ALLOWED_HOSTS задаются через окружение
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-(&3r!p+3ty0k6cp+3&%27a)z-mp+ymc91d')
-
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+
+# В проде SECRET_KEY обязателен: без него приложение не стартует.
+# Fallback с небезопасным ключом допустим только при DEBUG=True (локальная разработка).
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-key'
+    else:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY не задан. Укажите его в переменных окружения.')
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 

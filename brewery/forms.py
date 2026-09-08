@@ -1,6 +1,4 @@
 """Формы приложения brewery."""
-from collections import Counter
-
 from django import forms
 
 from .models import Beer, Hop, Rating, Vendor

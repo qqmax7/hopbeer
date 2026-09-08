@@ -69,33 +69,21 @@ class BeerListView(LoginRequiredMixin, ListView):
     template_name = 'brewery/beer_list.html'
     context_object_name = 'beers'
 
+    def get_queryset(self):
+        return super().get_queryset().select_related('vendor').prefetch_related('hops')
+
 
 class BeerDetailView(LoginRequiredMixin, DetailView):
     model = Beer
     template_name = 'brewery/beer_detail.html'
     context_object_name = 'beer'
 
-
-class BeerCreateView(LoginRequiredMixin, CreateView):
-    model = Beer
-    form_class = BeerForm
-    template_name = 'brewery/beer_form.html'
-    success_url = reverse_lazy('beer_list')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['hops_json'] = json.dumps(
-            [{'id': h.pk, 'name': h.name} for h in Hop.objects.all().order_by('name')],
-            ensure_ascii=False
-        )
-        return ctx
+    def get_queryset(self):
+        return super().get_queryset().select_related('vendor').prefetch_related('hops')
 
 
-class BeerUpdateView(LoginRequiredMixin, UpdateView):
-    model = Beer
-    form_class = BeerForm
-    template_name = 'brewery/beer_form.html'
-    success_url = reverse_lazy('beer_list')
+class HopsJsonMixin:
+    """Добавляет в контекст JSON-список хмеля для виджета выбора."""
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -104,6 +92,20 @@ class BeerUpdateView(LoginRequiredMixin, UpdateView):
             ensure_ascii=False
         )
         return ctx
+
+
+class BeerCreateView(LoginRequiredMixin, HopsJsonMixin, CreateView):
+    model = Beer
+    form_class = BeerForm
+    template_name = 'brewery/beer_form.html'
+    success_url = reverse_lazy('beer_list')
+
+
+class BeerUpdateView(LoginRequiredMixin, HopsJsonMixin, UpdateView):
+    model = Beer
+    form_class = BeerForm
+    template_name = 'brewery/beer_form.html'
+    success_url = reverse_lazy('beer_list')
 
 
 class BeerDeleteView(LoginRequiredMixin, DeleteView):
