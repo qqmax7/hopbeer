@@ -46,7 +46,7 @@ class BeerForm(forms.ModelForm):
     class Meta:
         model = Beer
         fields = ['name', 'style', 'abv', 'ibu', 'og', 'value_deal', 'gost',
-                  'description', 'vendor', 'hops']
+                  'description', 'vendor', 'hops', 'image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название пива'}),
             'style': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Стиль'}),
@@ -57,6 +57,7 @@ class BeerForm(forms.ModelForm):
             'gost': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ГОСТ'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Вкус, аромат, впечатления'}),
             'vendor': forms.Select(attrs={'class': 'form-control'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):

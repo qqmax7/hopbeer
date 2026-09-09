@@ -222,6 +222,37 @@ button[type="submit"] {
     padding: 16px;
 }
 
+.beer-thumb {
+    width: 100%;
+    max-width: 220px;
+    margin: 0 auto 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f4f8f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.beer-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.beer-thumb img.placeholder {
+    width: 64px;
+    height: 64px;
+    padding: 12px;
+    opacity: 0.55;
+}
+
+.detail-thumb {
+    max-width: 320px;
+    margin: 0 0 16px;
+}
+
 .card h3 {
     margin: 0 0 8px;
     font-size: 1.2rem;

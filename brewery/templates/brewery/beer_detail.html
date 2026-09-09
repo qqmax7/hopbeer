@@ -1,10 +1,18 @@
 {% extends 'brewery/base.html' %}
+{% load static %}
 
 {% block title %}{{ beer.name }}{% endblock %}
 
 {% block content %}
 <h1>{{ beer.name }}</h1>
 <div class="detail">
+    <div class="beer-thumb detail-thumb">
+        {% if beer.image %}
+        <img src="{{ beer.image.url }}" alt="{{ beer.name }}">
+        {% else %}
+        <img src="{% static 'img/beer-placeholder.svg' %}" alt="{{ beer.name }}" class="placeholder">
+        {% endif %}
+    </div>
     <div class="detail-row"><span class="label">Стиль</span><span class="value">{{ beer.style|default:"—" }}</span></div>
     <div class="detail-row"><span class="label">Крепость</span><span class="value">{{ beer.abv|default:"—" }}%</span></div>
     <div class="detail-row"><span class="label">IBU</span><span class="value">{{ beer.ibu|default:"—" }}</span></div>

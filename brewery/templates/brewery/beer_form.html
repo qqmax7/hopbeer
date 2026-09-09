@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>{% if form.instance.pk %}Изменить{% else %}Добавить{% endif %} пиво</h1>
-<form method="post" id="beer-form">
+<form method="post" id="beer-form" enctype="multipart/form-data">
     {% csrf_token %}
     <div id="hops-hidden" data-name="hops">{{ form.hops }}</div>
 
@@ -44,6 +44,14 @@
     <div class="field">
         <label for="{{ form.vendor.id_for_label }}">Производитель</label>
         {{ form.vendor }}
+    </div>
+
+    <div class="field">
+        <label for="{{ form.image.id_for_label }}">Картинка</label>
+        {{ form.image }}
+        {% if form.instance.image %}
+        <p class="meta">Текущая: <a href="{{ form.instance.image.url }}" target="_blank">{{ form.instance.image.name }}</a></p>
+        {% endif %}
     </div>
 
     <div class="field hops-picker">

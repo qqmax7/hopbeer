@@ -23,7 +23,7 @@ class RatingInline(admin.TabularInline):
 
 @admin.register(Beer)
 class BeerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'style', 'abv', 'ibu', 'og', 'value_deal', 'gost', 'vendor')
+    list_display = ('name', 'style', 'abv', 'ibu', 'og', 'value_deal', 'gost', 'vendor', 'image')
     list_filter = ('style', 'vendor')
     search_fields = ('name', 'style')
     filter_horizontal = ('hops',)
