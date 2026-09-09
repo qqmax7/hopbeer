@@ -10,7 +10,7 @@
 <body>
 <header>
         {% if request.resolver_match.url_name != 'index' %}
-        <a class="back-link" href="javascript:history.back()">← Назад</a>
+        <a class="back-link" href="{% url 'index' %}">← Назад</a>
         {% endif %}
         {% block back_link %}{% endblock %}
         <details class="nav-details">
