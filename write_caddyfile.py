@@ -20,7 +20,7 @@ max.evgdan.ru {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	}
 	handle /media/* {
-		root * /opt/hopbeer/media
+		root * /opt/hopbeer
 		file_server
 	}
 	reverse_proxy 127.0.0.1:8080 {
