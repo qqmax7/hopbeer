@@ -8,10 +8,20 @@ User=root
 Group=root
 WorkingDirectory=/opt/hopbeer
 EnvironmentFile=/opt/hopbeer/.env
+# Логи gunicorn и Django идут в stdout/stderr, откуда их забирает systemd-journald.
+# Файлы не используем: journald сам ротирует и сжимает записи (journalctl -u hopbeer).
+# Внимание: '%' в unit-файлах — спецсимвол, поэтому в --access-logformat он удвоен.
 ExecStart=/opt/hopbeer/venv/bin/gunicorn beer_app.wsgi:application \
     --bind 127.0.0.1:8000 \
     --workers 2 \
-    --timeout 120
+    --timeout 120 \
+    --log-level info \
+    --access-logfile - \
+    --access-logformat '%%(h)s %%(t)s "%%(r)s" %%(s)s %%(b)s %%(L)ss "%%(f)s"' \
+    --error-logfile -
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hopbeer
 Restart=always
 RestartSec=3
 

@@ -127,8 +127,50 @@ systemctl is-active refresh-mtproxy-config.timer
 
 ### Логи
 
+Всё пишется в systemd-journal, отдельных файлов приложения нет.
+
 ```bash
 journalctl -u caddy -u tproxy-server -u mtproxy --since '30 minutes ago'
+```
+
+Логи hopbeer (см. раздел 6.1):
+
+```bash
+# всe записи приложения с момента запуска
+journalctl -u hopbeer --since today
+
+# только ошибки и traceback-и
+journalctl -u hopbeer -p err --since today
+
+# следить в реальном времени (повторите действие и смотрите)
+journalctl -u hopbeer -f
+
+# только запросы к конкретному адресу
+journalctl -u hopbeer --since today | grep '/beers/create'
+```
+
+### 6.1 Как устроено логирование hopbeer
+
+- Django (`beer_app/settings.py`, блок `LOGGING`) пишет в stdout/stderr через `StreamHandler`:
+  `django.request` — 4xx как WARNING и 5xx как ERROR с traceback, `django.security` —
+  подозрительные запросы, `brewery` — логи приложения на уровне из `DJANGO_LOG_LEVEL`
+  (по умолчанию `INFO`).
+- gunicorn (`deploy/hopbeer.service`) запускается с `--access-logfile -` и
+  `--error-logfile -`, поэтому access log и ошибки также идут в journal со
+  `SyslogIdentifier=hopbeer`.
+- Caddy (`write_caddyfile.py`) пишет access log в stdout (директива `log`) — там видны
+  запросы даже если Django упал до записи в лог.
+- Логи не дублируются в файлы: journald сжимает и ротирует записи сам,
+  отдельный logrotate не нужен. Размер ограничен через
+  `deploy/journald-hopbeer.conf` (200 МБ), потому что дефолтные 10% диска — это ~940 МБ.
+
+Если нужно больше подробностей по конкретному сбою, поднимите уровень на время:
+
+```bash
+# /opt/hopbeer/.env
+DJANGO_LOG_LEVEL=DEBUG
+systemctl restart hopbeer
+# … воспроизвести ошибку, затем вернуть INFO и перезапустить
 ```
 
 ### Рестарт прокси (обрыв сессий — нормально, клиент переподключится)
@@ -168,5 +210,6 @@ cd /opt/tproxy-server && sudo ./deploy/update-relay.sh
 | `/etc/mtproxy/mtproxy.env` | секрет MTProxy + workers/connections |
 | `/etc/mtproxy/proxy-secret`, `proxy-multi.conf` | официальные данные MTProxy (обновляются таймером) |
 | `/etc/systemd/system/*.service`, `*.timer` | все юниты (tproxy, mtproxy, firewall, refresh, caddy, hopbeer) |
+| `/etc/systemd/journald.conf.d/50-hopbeer.conf` | лимит журнала (200 МБ): `deploy/journald-hopbeer.conf` |
 | `/opt/hopbeer/.env` | переменные окружения Django |
 | `/opt/hopbeer/db.sqlite3` | база данных приложения |

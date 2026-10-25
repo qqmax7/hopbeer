@@ -130,6 +130,78 @@ SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False') == '
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Логирование.
+# Пишем только в stdout/stderr: на сервере их собирает systemd-journald
+# (`journalctl -u hopbeer`), он же сжимает и ротирует записи. Отдельные файлы
+# не заводим — иначе нужен свой logrotate, а диск на сервере небольшой.
+LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+        # Такой же формат, каким Django печатает запросы в runserver.
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+        'django.server': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        # Явно перекрываем стандартный django-логгер: по умолчанию при DEBUG=False
+        # он отправляет ошибки письмом через AdminEmailHandler, а почта не настроена.
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # django.request пишет 4xx как WARNING, 5xx как ERROR с traceback —
+        # именно эти записи нужны, чтобы разбирать ошибки на проде.
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Печать запросов при локальном `manage.py runserver` (на проде этот логгер
+        # не используется — там запросы пишет gunicorn).
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Логи приложения: logger = logging.getLogger(__name__) в brewery.*
+        'brewery': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
+
+
 # Аутентификация
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'index'

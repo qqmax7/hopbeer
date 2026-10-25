@@ -15,6 +15,10 @@ caddyfile = r"""{
 
 max.evgdan.ru {
 	encode zstd gzip
+	log {
+		output stdout
+		format console
+	}
 	header {
 		-Via
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
