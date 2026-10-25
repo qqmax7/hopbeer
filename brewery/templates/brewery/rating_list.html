@@ -4,6 +4,7 @@
 
 {% block content %}
 <h1>Оценки</h1>
+<p class="meta">Показаны только ваши оценки{% if rating_total %} (всего в базе: {{ rating_total }}){% endif %}.</p>
 <div class="list-actions">
     <a class="button" href="{% url 'rating_create' %}">Добавить оценку</a>
 </div>
@@ -22,7 +23,7 @@
         </div>
     </li>
     {% empty %}
-    <li class="empty">Пока нет записей.</li>
+    <li class="empty">У вас пока нет оценок.</li>
     {% endfor %}
 </ul>
 {% endblock %}

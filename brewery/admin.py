@@ -19,6 +19,7 @@ class HopAdmin(admin.ModelAdmin):
 class RatingInline(admin.TabularInline):
     model = Rating
     extra = 0
+    fields = ('owner', 'score', 'comment')
 
 
 @admin.register(Beer)
@@ -32,5 +33,6 @@ class BeerAdmin(admin.ModelAdmin):
 
 @admin.register(Rating)
 class RatingAdmin(admin.ModelAdmin):
-    list_display = ('beer', 'score', 'created_at')
-    list_filter = ('score',)
+    list_display = ('beer', 'owner', 'score', 'created_at')
+    list_filter = ('score', 'owner')
+    list_select_related = ('beer', 'owner')

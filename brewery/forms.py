@@ -74,6 +74,8 @@ class BeerForm(forms.ModelForm):
 
 
 class RatingForm(forms.ModelForm):
+    """Форма оценки. Владелец (`owner`) не редактируется — его задаёт представление."""
+
     class Meta:
         model = Rating
         fields = ['beer', 'score', 'comment']

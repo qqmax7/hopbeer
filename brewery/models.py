@@ -5,6 +5,7 @@
 import os
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.images import get_image_dimensions
 from django.db import models
@@ -110,10 +111,22 @@ class Beer(models.Model):
 
 
 class Rating(models.Model):
-    """Оценка пива."""
+    """Оценка пива.
+
+    Оценка принадлежит пользователю, который её поставил (`owner`): в интерфейсе
+    показываются только свои оценки.
+    """
 
     beer = models.ForeignKey(
         Beer, verbose_name='Пиво', on_delete=models.CASCADE, related_name='ratings'
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Пользователь',
+        on_delete=models.CASCADE,
+        related_name='ratings',
+        null=True,
+        blank=True,
     )
     score = models.PositiveSmallIntegerField('Оценка (1-10)')
     comment = models.TextField('Комментарий', blank=True)

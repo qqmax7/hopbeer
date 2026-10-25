@@ -206,14 +206,14 @@ button[type="submit"] {
     margin-top: 8px;
 }
 
-.card-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
+    .card-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
 .card {
     background: #fff;
@@ -262,6 +262,42 @@ button[type="submit"] {
     color: #4a5a4a;
     font-size: 0.98rem;
     margin-bottom: 10px;
+}
+
+.card .ratings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 12px;
+    margin-bottom: 10px;
+    font-size: 0.98rem;
+    color: #4a5a4a;
+}
+
+.card .ratings a {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.rating-avg {
+    background: #2e7d32;
+    color: #fff;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-weight: bold;
+}
+
+.rating-count {
+    color: #5a6a5a;
+}
+
+.rating-mine {
+    background: #e8f2e8;
+    border: 1px solid #bcd6bc;
+    border-radius: 20px;
+    padding: 3px 12px;
+    color: #1b4a1b;
+    font-weight: bold;
 }
 
 .card .actions a {
@@ -351,11 +387,12 @@ button[type="submit"] {
         padding: 12px 24px;
     }
 
-    header .nav-details summary {
+    /* Без JS кнопка «Меню» видна всегда, иначе навигация на широком экране пропала бы. */
+    html.js header .nav-details summary {
         display: none;
     }
 
-    header .nav-details nav {
+    html.js header .nav-details nav {
         position: static;
         box-shadow: none;
         background: transparent;
@@ -366,7 +403,7 @@ button[type="submit"] {
         gap: 16px;
     }
 
-    header nav a {
+    html.js header nav a {
         display: inline;
         padding: 0;
         border-top: none;
@@ -464,4 +501,60 @@ button[type="submit"] {
     padding: 14px 16px;
     color: #5a6a5a;
     font-style: italic;
+}
+
+/* ---- Отчет: таблицы рейтингов ---- */
+.report-section {
+    margin-bottom: 24px;
+}
+
+.report-section h2 {
+    color: #1b4a1b;
+    font-size: 1.15rem;
+    margin: 18px 0 10px;
+}
+
+.report-table-wrap {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.98rem;
+}
+
+.report-table th,
+.report-table td {
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #e6eee6;
+}
+
+.report-table thead th {
+    background: #e8f2e8;
+    color: #1b4a1b;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.report-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-table td.num {
+    white-space: nowrap;
+}
+
+.report-table .score {
+    color: #1b4a1b;
+    font-weight: bold;
+}
+
+.report-table td.empty {
+    padding: 16px 14px;
 }

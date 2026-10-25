@@ -1,0 +1,68 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Отчет{% endblock %}
+
+{% block content %}
+<h1>Отчет</h1>
+
+<section class="report-section">
+    <h2>Самые вкусные хмели</h2>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Хмель</th>
+                    <th>Популярность</th>
+                    <th>Оценка</th>
+                    <th>Пример</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hop in hops %}
+                <tr>
+                    <td>{{ hop.name }}</td>
+                    <td class="num">{{ hop.beers_count }}</td>
+                    <td class="num"><span class="score">{{ hop.avg_score|floatformat:"-1" }}/10</span></td>
+                    <td>
+                        {% if hop.best_beer %}
+                        <a href="{% url 'beer_detail' hop.best_beer.pk %}">{{ hop.best_beer.name }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="empty">Пока нет оценённого пива с хмелем.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="report-section">
+    <h2>Самые популярные производители</h2>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Пивоварня</th>
+                    <th>Количество пива</th>
+                    <th>Оценка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in vendors %}
+                <tr>
+                    <td>{{ vendor.name }}</td>
+                    <td class="num">{{ vendor.beers_count }}</td>
+                    <td class="num">
+                        {% if vendor.avg_score %}<span class="score">{{ vendor.avg_score|floatformat:"-1" }}/10</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="empty">Пока нет пива с указанным производителем.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

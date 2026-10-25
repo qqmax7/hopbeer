@@ -28,6 +28,20 @@
             {% if beer.gost %}<span>ГОСТ {{ beer.gost }}</span>{% endif %}
         </div>
         {% if beer.description %}<p>{{ beer.description }}</p>{% endif %}
+        <div class="ratings">
+            {% if beer.ratings_count %}
+            <span class="rating-avg" title="Средняя оценка по всем пользователям">★ {{ beer.avg_score|floatformat:"-1" }}/10</span>
+            <span class="rating-count">оценок: {{ beer.ratings_count }}</span>
+            {% else %}
+            <span class="rating-count">Оценок пока нет</span>
+            {% endif %}
+            {% if beer.my_ratings %}
+            <span class="rating-mine">Моя оценка: {{ beer.my_ratings.0.score }}/10</span>
+            <a href="{% url 'rating_update' beer.my_ratings.0.pk %}">Изменить оценку</a>
+            {% else %}
+            <a href="{% url 'rating_create' %}?beer={{ beer.pk }}">Оценить</a>
+            {% endif %}
+        </div>
         {% if beer.vendor %}<p class="meta">Производитель: {{ beer.vendor }}</p>{% endif %}
         {% if beer.hops.all %}
         <p class="meta">Хмель:

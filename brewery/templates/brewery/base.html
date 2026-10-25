@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>document.documentElement.classList.add('js');</script>
     <title>{% block title %}Пивоварня{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
@@ -21,6 +22,7 @@
                 <a href="{% url 'hop_list' %}">Хмель</a>
                 <a href="{% url 'vendor_list' %}">Производители</a>
                 <a href="{% url 'rating_list' %}">Оценки</a>
+                <a href="{% url 'report' %}">Отчет</a>
             </nav>
         </details>
         <div class="user-area">
@@ -39,5 +41,23 @@
     {% block content %}{% endblock %}
 </main>
 {% block extra_js %}{% endblock %}
+<script>
+    // На широких экранах кнопка «Меню» скрыта стилями, поэтому раскрываем список ссылок.
+    (function () {
+        var details = document.querySelector('.nav-details');
+        if (!details) return;
+        var wide = window.matchMedia('(min-width: 900px)');
+        function sync() {
+            // Широкий экран — список раскрыт; узкий — свёрнут, открывается кнопкой «Меню».
+            details.open = wide.matches;
+        }
+        sync();
+        if (wide.addEventListener) {
+            wide.addEventListener('change', sync);
+        } else if (wide.addListener) {
+            wide.addListener(sync);
+        }
+    })();
+</script>
 </body>
 </html>

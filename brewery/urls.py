@@ -30,4 +30,7 @@ urlpatterns = [
     path('ratings/create/', views.RatingCreateView.as_view(), name='rating_create'),
     path('ratings/<int:pk>/edit/', views.RatingUpdateView.as_view(), name='rating_update'),
     path('ratings/<int:pk>/delete/', views.RatingDeleteView.as_view(), name='rating_delete'),
+
+    # Отчёт
+    path('reports/', views.ReportView.as_view(), name='report'),
 ]
