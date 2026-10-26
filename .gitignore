@@ -8,6 +8,8 @@ env/
 
 # Django
 db.sqlite3
+db.sqlite3.*
+db.sqlite3-*
 /staticfiles/
 media/
 
@@ -21,6 +23,10 @@ server_err.log
 .idea/
 .vscode/
 *.swp
+
+# Локальные артефакты разработки
+/test_beer.png
+/brewery/templates/brewery/kodik_*.md
 
 # OS
 .DS_Store
