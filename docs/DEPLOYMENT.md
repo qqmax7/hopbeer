@@ -47,6 +47,9 @@ Caddy 2.11.4  (TLS, сертификаты Let's Encrypt, редиректы)
 - gunicorn как systemd-сервис: `hopbeer.service` (`127.0.0.1:8000`, 2 воркера).
 - Конфигурация через переменные окружения: `/opt/hopbeer/.env`
   (секрет ключа, `DEBUG=False`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`).
+- Вход через Yandex ID (SPEC-002): ключи `YANDEX_CLIENT_ID`/`YANDEX_CLIENT_SECRET`
+  в том же `.env`, callback `https://max.evgdan.ru/accounts/yandex/login/callback/`,
+  подробности — раздел 6.2.
 
 ### Telegram WEB-прокси (tproxy-server)
 
@@ -178,6 +181,46 @@ systemctl restart hopbeer
 ```bash
 systemctl restart tproxy-server mtproxy
 ```
+
+### 6.2 Вход через Yandex ID (SPEC-002)
+
+Приложение Yandex регистрируется в консоли `https://oauth.yandex.com/client/new`
+с доступом к email (`login:email`) и к логину/имени (`login:info`). Callback URL:
+
+- прод: `https://max.evgdan.ru/accounts/yandex/login/callback/`;
+- локальная разработка: `http://127.0.0.1:8000/accounts/yandex/login/callback/`.
+
+Ключи кладутся только в `/opt/hopbeer/.env` (в git, шаблоны и логи не попадают):
+
+```bash
+# /opt/hopbeer/.env
+YANDEX_CLIENT_ID=<client id приложения>
+YANDEX_CLIENT_SECRET=<client secret приложения>
+```
+
+Без этих переменных кнопка «Войти через Yandex ID» не показывается, а страница
+входа, пароли и остальное приложение работают как раньше.
+
+Перед первым выкатом SPEC-002 обязателен бэкап `db.sqlite3` и `media/`: впервые
+после baseline применяются миграции новых приложений `sites`, `account` и
+`socialaccount` (связи с внешними аккаунтами и адреса email).
+
+Проверка после выката:
+
+- гость открывает `/beers/` → редирект на `/accounts/login/?next=/beers/`;
+- вход по логину и паролю работает; кнопка Yandex видна, если ключи заданы;
+- вход через Yandex создаёт обычную учётную запись (`is_staff=False`) и
+  возвращает на исходную страницу; повторный вход открывает ту же запись;
+- `/accounts/3rdparty/` показывает связи, `/privacy/` открывается без входа;
+- в логах есть только провайдер, результат и имя пользователя:
+  `journalctl -u hopbeer | grep -i yandex`.
+
+Откат: `git revert` коммитов спеки, `pip install -r requirements.txt`, удалить
+`YANDEX_*` из `.env`, перезапустить `hopbeer`. Таблицы библиотеки можно оставить
+(они не используются) или удалить `manage.py migrate socialaccount zero` и
+`manage.py migrate account zero`. Учётные записи, созданные через Yandex, после
+отката остаются без пароля — администратор задаёт им пароль в `/admin/`, иначе
+люди потеряют доступ.
 
 ### Обновление hopbeer после пуша в GitHub
 

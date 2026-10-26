@@ -66,6 +66,11 @@ $env:DJANGO_DEBUG = 'True'
   `request.user`.
 - Пользовательские тексты и комментарии в коде — на русском. Локаль `ru-ru`,
   десятичный разделитель — запятая.
+- Соцвход — только через `django-allauth`. Ключи провайдеров (`YANDEX_CLIENT_ID`,
+  `YANDEX_CLIENT_SECRET`) берутся только из окружения; тексты страниц входа и
+  связей живут в шаблонах проекта (`brewery/templates/account/`,
+  `brewery/templates/socialaccount/`), потому что `brewery` стоит в
+  `INSTALLED_APPS` раньше allauth.
 - Валидация — на сервере (в форме/модели), а не только атрибутами HTML.
 - Не трогай `db.sqlite3`, `media/`, `staticfiles/`, `server*.log` — это
   локальные/сборочные артефакты, они вне git.

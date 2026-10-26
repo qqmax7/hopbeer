@@ -1,0 +1,13 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Выход — Пивоварня{% endblock %}
+
+{% block content %}
+<h1>Выход</h1>
+<p>Завершить сеанс и выйти из учётной записи?</p>
+<form method="post" action="{% url 'account_logout' %}">
+    {% csrf_token %}
+    <button type="submit">Выйти</button>
+</form>
+<p><a href="{% url 'index' %}">На главную</a></p>
+{% endblock %}

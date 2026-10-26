@@ -558,3 +558,43 @@ button[type="submit"] {
 .report-table td.empty {
     padding: 16px 14px;
 }
+
+/* Сообщения (вход через Yandex, связи с аккаунтами) — SPEC-002 */
+.messages {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+}
+
+.messages .message {
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #e8f2e8;
+    color: #1b4a1b;
+}
+
+.messages .message.error {
+    background: #fbe9e7;
+    color: #b3261e;
+}
+
+.messages .message.success {
+    background: #e8f2e8;
+    color: #1b4a1b;
+}
+
+/* Связи с аккаунтами — SPEC-002 */
+.connections-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+}
+
+.connections-list .connection {
+    margin: 0 0 8px;
+}
+
+.social-login {
+    margin: 12px 0;
+}

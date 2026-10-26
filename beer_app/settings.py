@@ -35,7 +35,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # brewery — раньше allauth, чтобы шаблоны проекта (account/*, socialaccount/*)
+    # находились первыми и переопределяли библиотечные.
     'brewery',
+    # Сайты и django-allauth: вход через Yandex ID (SPEC-002).
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.yandex',
+]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 MIDDLEWARE = [
@@ -44,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -61,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'brewery.context_processors.yandex_oauth',
             ],
         },
     },
@@ -203,6 +220,39 @@ LOGGING = {
 
 
 # Аутентификация
-LOGIN_URL = 'login'
+LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
+
+
+# Вход через Yandex ID (SPEC-002).
+# Ключи приложения Yandex — только из окружения: в репозитории, БД и логах их нет.
+YANDEX_CLIENT_ID = os.environ.get('YANDEX_CLIENT_ID', '')
+YANDEX_CLIENT_SECRET = os.environ.get('YANDEX_CLIENT_SECRET', '')
+# Без ключей кнопка входа не показывается, а приложение работает как раньше.
+YANDEX_OAUTH_ENABLED = bool(YANDEX_CLIENT_ID and YANDEX_CLIENT_SECRET)
+
+if YANDEX_OAUTH_ENABLED:
+    SOCIALACCOUNT_PROVIDERS = {
+        'yandex': {
+            'APP': {
+                'client_id': YANDEX_CLIENT_ID,
+                'secret': YANDEX_CLIENT_SECRET,
+            },
+            'SCOPE': ['login:email', 'login:info'],
+        },
+    }
+else:
+    SOCIALACCOUNT_PROVIDERS = {}
+
+SOCIALACCOUNT_ADAPTER = 'brewery.adapters.HopBeerSocialAccountAdapter'
+SOCIALACCOUNT_AUTO_SIGNUP = True          # самозапись без формы (FR-003)
+SOCIALACCOUNT_EMAIL_REQUIRED = True       # без email учётная запись не создаётся (FR-011)
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = False  # автопривязки по email нет (FR-006)
+SOCIALACCOUNT_STORE_TOKENS = False          # токены Yandex в базе не храним
+# Старт входа — обычная GET-ссылка (решение владельца 2026-10-26).
+SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'         # почта не настроена
+ACCOUNT_LOGIN_METHODS = {'username'}        # вход по логину, как в baseline
+ACCOUNT_LOGOUT_ON_GET = False               # выход только POST-формой

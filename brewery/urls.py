@@ -33,4 +33,7 @@ urlpatterns = [
 
     # Отчёт
     path('reports/', views.ReportView.as_view(), name='report'),
+
+    # Политика конфиденциальности — публичная страница (SPEC-002 FR-013)
+    path('privacy/', views.PrivacyView.as_view(), name='privacy'),
 ]

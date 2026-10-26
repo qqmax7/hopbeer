@@ -1,8 +1,15 @@
 """Тесты списка пива и отображения оценок."""
+from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
+
+import requests
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.providers.yandex.views import YandexOAuth2Adapter
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from .adapters import HopBeerSocialAccountAdapter
 from .models import Beer, Hop, Rating, Vendor
 
 User = get_user_model()
@@ -558,3 +565,461 @@ class AccessMatrixTests(TestCase):
         for url_name in ('beer_list', 'hop_list', 'vendor_list', 'rating_list'):
             page = self.client.get(reverse(url_name))
             self.assertNotContains(page, 'name="is_staff"')
+
+
+# ---------- SPEC-002: вход через Yandex ID ----------
+
+# Ключи провайдера подставляются в тестах; реальные значения — в окружении.
+YANDEX_CREDENTIALS = {
+    'YANDEX_OAUTH_ENABLED': True,
+    'SOCIALACCOUNT_PROVIDERS': {
+        'yandex': {
+            'APP': {'client_id': 'test-client-id', 'secret': 'test-secret'},
+            'SCOPE': ['login:email', 'login:info'],
+        },
+    },
+}
+
+# Профиль, который якобы вернул Yandex.
+YANDEX_PROFILE = {
+    'id': '4611686018427387904',
+    'default_email': 'new@example.com',
+    'display_name': 'Иван',
+    'first_name': 'Иван',
+    'last_name': 'Петров',
+    'emails': ['new@example.com'],
+}
+
+
+class FakeYandexResponse:
+    """Ответ HTTP-сессии allauth без сети."""
+
+    def __init__(self, data, status_code=200):
+        self._data = data
+        self.status_code = status_code
+        self.text = ''
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(f'Yandex вернул {self.status_code}')
+
+    def json(self):
+        return self._data
+
+
+class FakeYandexSession:
+    """Подмена сессии requests: тесты не ходят в сеть."""
+
+    def __init__(self, data=None, error=None):
+        self._data = data
+        self._error = error
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        return False
+
+    def get(self, *args, **kwargs):
+        if self._error is not None:
+            raise self._error
+        return FakeYandexResponse(self._data)
+
+
+class YandexOAuthHelpers:
+    """Шаги соцвхода, общие для тестов: старт OAuth и ответ Yandex."""
+
+    def start_yandex_login(self, **params):
+        response = self.client.get(reverse('yandex_login'), params)
+        self.assertEqual(response.status_code, 302)
+        location = response['Location']
+        state = parse_qs(urlparse(location).query).get('state', [''])[0]
+        self.assertTrue(state, 'Yandex должен получить параметр state')
+        return location, state
+
+    def yandex_callback(
+        self, profile=None, state=None, code='test-code', error=None, session_error=None
+    ):
+        params = {'state': state}
+        if error:
+            params['error'] = error
+            return self.client.get(reverse('yandex_callback'), params)
+        params['code'] = code
+        with patch.object(
+            HopBeerSocialAccountAdapter,
+            'get_requests_session',
+            return_value=FakeYandexSession(profile, session_error),
+        ), patch.object(
+            YandexOAuth2Adapter,
+            'get_access_token_data',
+            return_value={'access_token': 'test-token'},
+        ):
+            return self.client.get(reverse('yandex_callback'), params)
+
+    def login_page_after(self, response):
+        """Перейти по редиректу и вернуть страницу, на которой видно сообщение."""
+        self.assertEqual(response.status_code, 302)
+        page = self.client.get(response['Location'])
+        self.assertEqual(page.status_code, 200)
+        return page
+
+
+@override_settings(STORAGES=TEST_STORAGES, **YANDEX_CREDENTIALS)
+class YandexLoginTests(YandexOAuthHelpers, TestCase):
+    """Вход через Yandex ID, самозапись и отказы (SPEC-002)."""
+
+    def setUp(self):
+        self.beer = Beer.objects.create(name='Fruitality', style='Fruited Milk IPA')
+
+    def create_social_user(self, profile=None):
+        _, state = self.start_yandex_login()
+        response = self.yandex_callback(profile=profile or YANDEX_PROFILE, state=state)
+        self.assertEqual(response.status_code, 302)
+        return User.objects.get(email=YANDEX_PROFILE['default_email'])
+
+    def test_guest_still_gets_login_redirect_with_next(self):
+        response = self.client.get(reverse('beer_list'))
+
+        self.assertEqual(response.status_code, 302)
+        location = urlparse(response['Location'])
+        self.assertEqual(location.path, '/accounts/login/')
+        self.assertEqual(parse_qs(location.query)['next'], [reverse('beer_list')])
+        self.assertEqual(self.client.get(response['Location']).status_code, 200)
+
+    def test_login_page_shows_yandex_button_and_password_form(self):
+        response = self.client.get(reverse('account_login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Войти через Yandex ID')
+        self.assertContains(response, 'name="login"')
+        self.assertContains(response, 'name="password"')
+
+    def test_yandex_button_redirects_to_provider_with_state(self):
+        location, state = self.start_yandex_login(next=reverse('beer_list'))
+
+        provider_url = urlparse(location)
+        self.assertEqual(
+            f'{provider_url.scheme}://{provider_url.netloc}{provider_url.path}',
+            'https://oauth.yandex.com/authorize',
+        )
+        params = parse_qs(provider_url.query)
+        self.assertEqual(params['client_id'], ['test-client-id'])
+        self.assertEqual(
+            params['redirect_uri'], ['http://testserver/accounts/yandex/login/callback/']
+        )
+        self.assertEqual(params['state'], [state])
+
+    def test_first_yandex_login_creates_user_and_logs_in(self):
+        _, state = self.start_yandex_login(next=reverse('beer_list'))
+
+        response = self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('beer_list'))
+        self.assertEqual(User.objects.count(), 1)
+        user = User.objects.get(email='new@example.com')
+        self.assertFalse(user.is_staff)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+        self.assertEqual(SocialAccount.objects.filter(user=user).count(), 1)
+
+    def test_social_user_has_no_usable_password(self):
+        user = self.create_social_user()
+
+        self.assertFalse(user.has_usable_password())
+        self.client.logout()
+        response = self.client.post(
+            reverse('account_login'),
+            {'login': user.get_username(), 'password': 'pass12345'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_new_social_user_cannot_change_catalog(self):
+        self.create_social_user()
+        hop_count = Hop.objects.count()
+        beer_count = Beer.objects.count()
+
+        beer_response = self.client.post(reverse('beer_create'), {'name': 'Новое пиво'})
+        hop_response = self.client.post(reverse('hop_create'), {'name': 'Новый хмель'})
+
+        self.assertEqual(beer_response.status_code, 403)
+        self.assertEqual(hop_response.status_code, 403)
+        self.assertEqual(Beer.objects.count(), beer_count)
+        self.assertEqual(Hop.objects.count(), hop_count)
+
+    def test_second_yandex_login_uses_same_account(self):
+        user = self.create_social_user()
+        self.client.logout()
+
+        _, state = self.start_yandex_login()
+        self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+        self.assertEqual(SocialAccount.objects.count(), 1)
+
+    def test_existing_email_is_not_linked_automatically(self):
+        old_user = User.objects.create_user(
+            username='old', password='pass12345', email='old@example.com'
+        )
+        profile = dict(
+            YANDEX_PROFILE, default_email='old@example.com', emails=['old@example.com']
+        )
+        _, state = self.start_yandex_login()
+
+        response = self.yandex_callback(profile=profile, state=state)
+
+        page = self.login_page_after(response)
+        self.assertEqual(User.objects.count(), 1)
+        self.assertFalse(SocialAccount.objects.exists())
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertContains(page, 'Аккаунт с таким email уже существует')
+        self.assertTrue(User.objects.filter(pk=old_user.pk).exists())
+
+    def test_provider_cancel_keeps_guest_on_login_page(self):
+        _, state = self.start_yandex_login()
+
+        response = self.yandex_callback(state=state, error='access_denied')
+
+        page = self.login_page_after(response)
+        self.assertContains(page, 'Вход через Yandex ID отменён или не удался')
+        self.assertContains(page, 'name="password"')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_provider_error_shows_message_not_500(self):
+        _, state = self.start_yandex_login()
+
+        response = self.yandex_callback(
+            profile=YANDEX_PROFILE,
+            state=state,
+            session_error=requests.ConnectionError('Yandex недоступен'),
+        )
+
+        page = self.login_page_after(response)
+        self.assertContains(page, 'Вход через Yandex ID отменён или не удался')
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_missing_email_does_not_create_account(self):
+        profile = {'id': '42', 'display_name': 'Без почты'}
+        _, state = self.start_yandex_login()
+
+        response = self.yandex_callback(profile=profile, state=state)
+
+        page = self.login_page_after(response)
+        self.assertEqual(User.objects.count(), 0)
+        self.assertFalse(SocialAccount.objects.exists())
+        self.assertContains(page, 'Yandex не передал адрес электронной почты')
+
+    @override_settings(YANDEX_OAUTH_ENABLED=False, SOCIALACCOUNT_PROVIDERS={})
+    def test_yandex_button_hidden_without_credentials(self):
+        response = self.client.get(reverse('account_login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Войти через Yandex ID')
+        self.assertContains(response, 'name="password"')
+        user = User.objects.create_user(username='local', password='pass12345')
+        login_response = self.client.post(
+            reverse('account_login'), {'login': 'local', 'password': 'pass12345'}
+        )
+        self.assertEqual(login_response.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+        start_response = self.client.get(reverse('yandex_login'))
+        self.assertEqual(start_response.status_code, 302)
+        self.assertEqual(start_response['Location'], reverse('account_login'))
+
+    def test_existing_user_keeps_password_login_after_migrations(self):
+        user = User.objects.create_user(
+            username='keeper',
+            password='pass12345',
+            email='keeper@example.com',
+            is_staff=True,
+        )
+        rating = Rating.objects.create(beer=self.beer, owner=user, score=7)
+
+        response = self.client.post(
+            reverse('account_login'), {'login': 'keeper', 'password': 'pass12345'}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        user.refresh_from_db()
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.check_password('pass12345'))
+        self.assertEqual(Rating.objects.get(pk=rating.pk).owner_id, user.pk)
+
+    def test_username_collision_creates_unique_username(self):
+        existing = User.objects.create_user(
+            username='Иван', password='pass12345', email='other@example.com'
+        )
+        _, state = self.start_yandex_login()
+
+        self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        self.assertEqual(User.objects.count(), 2)
+        new_user = User.objects.get(email='new@example.com')
+        self.assertNotEqual(new_user.get_username(), existing.get_username())
+        existing.refresh_from_db()
+        self.assertEqual(existing.get_username(), 'Иван')
+        self.assertEqual(existing.email, 'other@example.com')
+
+    def test_social_user_can_log_out_with_post(self):
+        self.create_social_user()
+
+        response = self.client.post(reverse('account_logout'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(self.client.get(reverse('beer_list')).status_code, 302)
+
+
+@override_settings(STORAGES=TEST_STORAGES, **YANDEX_CREDENTIALS)
+class SocialAccountConnectionsTests(YandexOAuthHelpers, TestCase):
+    """Страница связей: привязка и отвязка Yandex (SPEC-002 FR-007…FR-009)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='reader', password='pass12345', email='reader@example.com'
+        )
+
+    def connect_yandex(self, profile=None):
+        self.client.force_login(self.user)
+        _, state = self.start_yandex_login(process='connect')
+        return self.yandex_callback(profile=profile or YANDEX_PROFILE, state=state)
+
+    def test_guest_gets_login_redirect_for_connections_page(self):
+        response = self.client.get(reverse('socialaccount_connections'))
+
+        self.assertEqual(response.status_code, 302)
+        location = urlparse(response['Location'])
+        self.assertEqual(location.path, '/accounts/login/')
+        self.assertEqual(
+            parse_qs(location.query)['next'], [reverse('socialaccount_connections')]
+        )
+
+    def test_authenticated_user_connects_yandex_and_signs_in_with_it(self):
+        response = self.connect_yandex()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('socialaccount_connections'))
+        account = SocialAccount.objects.get(user=self.user, provider='yandex')
+        self.assertEqual(account.uid, YANDEX_PROFILE['id'])
+        page = self.client.get(reverse('socialaccount_connections'))
+        self.assertContains(page, 'Yandex')
+        self.assertContains(page, 'Отключить')
+        self.client.logout()
+
+        _, state = self.start_yandex_login()
+        self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.user.pk)
+
+    def test_user_with_password_can_disconnect_yandex(self):
+        self.connect_yandex()
+        account = SocialAccount.objects.get(user=self.user)
+
+        response = self.client.post(
+            reverse('socialaccount_connections'), {'account': account.pk}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SocialAccount.objects.exists())
+        page = self.client.get(reverse('socialaccount_connections'))
+        self.assertContains(page, 'Yandex ID отключён')
+        self.client.logout()
+        login_response = self.client.post(
+            reverse('account_login'), {'login': 'reader', 'password': 'pass12345'}
+        )
+        self.assertEqual(login_response.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.user.pk)
+        self.client.logout()
+
+        _, state = self.start_yandex_login()
+        self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        self.assertNotEqual(int(self.client.session['_auth_user_id']), self.user.pk)
+
+    def test_user_without_password_cannot_disconnect_yandex(self):
+        social_user = User.objects.create_user(username='social', password=None)
+        account = SocialAccount.objects.create(
+            user=social_user,
+            provider='yandex',
+            uid=YANDEX_PROFILE['id'],
+            extra_data={'default_email': 'social@example.com'},
+        )
+        self.client.force_login(social_user)
+
+        response = self.client.post(
+            reverse('socialaccount_connections'), {'account': account.pk}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Сначала задайте пароль — иначе вы не сможете войти.')
+        self.assertTrue(SocialAccount.objects.filter(pk=account.pk).exists())
+
+    def test_connections_page_hints_empty_state(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('socialaccount_connections'))
+
+        self.assertContains(response, 'Пока нет подключённых аккаунтов.')
+        self.assertContains(response, 'Подключить Yandex ID')
+
+
+@override_settings(STORAGES=TEST_STORAGES, **YANDEX_CREDENTIALS)
+class SocialLoginLoggingTests(YandexOAuthHelpers, TestCase):
+    """Соцвход пишется в логгер brewery без секретов (SPEC-002 FR-014)."""
+
+    def test_social_login_failure_is_logged_without_secrets(self):
+        _, state = self.start_yandex_login()
+
+        with self.assertLogs('brewery', 'WARNING') as logs:
+            self.yandex_callback(state=state, error='access_denied')
+
+        output = '\n'.join(logs.output)
+        self.assertIn('yandex', output)
+        self.assertIn('cancelled', output)
+        self.assertNotIn('test-token', output)
+        self.assertNotIn('test-secret', output)
+        self.assertNotIn('test-code', output)
+
+    def test_social_login_success_is_logged(self):
+        _, state = self.start_yandex_login()
+
+        with self.assertLogs('brewery', 'INFO') as logs:
+            self.yandex_callback(profile=YANDEX_PROFILE, state=state)
+
+        output = '\n'.join(logs.output)
+        user = User.objects.get(email='new@example.com')
+        self.assertIn('yandex', output)
+        self.assertIn(user.get_username(), output)
+        self.assertNotIn('test-token', output)
+        self.assertNotIn('test-secret', output)
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class PrivacyPolicyTests(TestCase):
+    """Публичная политика конфиденциальности (SPEC-002 FR-013)."""
+
+    def test_privacy_page_is_public_and_describes_data(self):
+        response = self.client.get(reverse('privacy'))
+
+        self.assertEqual(response.status_code, 200)
+        for heading in (
+            'Какие данные мы получаем',
+            'Зачем они нужны',
+            'Где они хранятся',
+            'Чего мы не получаем',
+            'Как удалить учётную запись',
+            'Контакты',
+        ):
+            self.assertContains(response, heading)
+        self.assertContains(self.client.get(reverse('account_login')), 'Политика конфиденциальности')
+        user = User.objects.create_user(username='reader', password='pass12345')
+        self.client.force_login(user)
+        self.assertContains(
+            self.client.get(reverse('socialaccount_connections')),
+            'Политика конфиденциальности',
+        )

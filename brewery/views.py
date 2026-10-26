@@ -2,6 +2,9 @@
 import json
 import logging
 
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.views import ConnectionsView as AllauthConnectionsView
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Avg, Count, F, Prefetch
 from django.http import Http404
@@ -292,3 +295,34 @@ class ReportView(LoginRequiredMixin, TemplateView):
                 '-beers_count', F('avg_score').desc(nulls_last=True), 'name'
             )[:REPORT_LIMIT]
         )
+
+
+# ---------- Вход через Yandex ID (SPEC-002) ----------
+def yandex_login_start(request):
+    """Старт OAuth в Yandex; без ключей — возврат на страницу входа.
+
+    Без переменных окружения у провайдера нет приложения, и библиотека
+    падала бы на нём. Гость вместо ошибки попадает на обычный вход (FR-012).
+    """
+    if not settings.YANDEX_OAUTH_ENABLED:
+        return redirect('account_login')
+    from allauth.socialaccount.providers.yandex.views import oauth2_login
+
+    return oauth2_login(request)
+
+
+class ConnectionsView(AllauthConnectionsView):
+    """Связи с внешними аккаунтами: список, подключение и отвязка (FR-007)."""
+
+    template_name = 'socialaccount/connections.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['socialaccounts'] = SocialAccount.objects.filter(user=self.request.user)
+        return context
+
+
+class PrivacyView(TemplateView):
+    """Публичная политика конфиденциальности (FR-013)."""
+
+    template_name = 'brewery/privacy.html'

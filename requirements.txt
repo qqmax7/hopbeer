@@ -2,3 +2,4 @@ Django==5.0.14
 gunicorn==21.2.0
 whitenoise==6.6.0
 Pillow==12.3.0
+django-allauth[socialaccount]==65.21.0

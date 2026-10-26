@@ -1,0 +1,39 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Связи с аккаунтами — Пивоварня{% endblock %}
+
+{% block content %}
+<h1>Связи с аккаунтами</h1>
+
+<h2>Подключённые аккаунты</h2>
+{% if form.non_field_errors %}
+<p class="error">{{ form.non_field_errors|join:' ' }}</p>
+{% endif %}
+{% if socialaccounts %}
+<form method="post" action="{% url 'socialaccount_connections' %}">
+    {% csrf_token %}
+    <ul class="connections-list">
+        {% for account in socialaccounts %}
+        <li class="connection">
+            <label>
+                <input type="radio" name="account" value="{{ account.pk }}" required>
+                Yandex{% if account.extra_data.default_email %} ({{ account.extra_data.default_email }}){% endif %}
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+    <button type="submit">Отключить</button>
+</form>
+{% else %}
+<p class="empty">Пока нет подключённых аккаунтов.</p>
+{% endif %}
+
+{% if YANDEX_OAUTH_ENABLED %}
+<p class="social-login">
+    <a class="button" href="{% url 'yandex_login' %}?process=connect">Подключить Yandex ID</a>
+</p>
+{% endif %}
+
+<p><a href="{% url 'privacy' %}">Политика конфиденциальности</a></p>
+<p><a href="{% url 'index' %}">На главную</a></p>
+{% endblock %}

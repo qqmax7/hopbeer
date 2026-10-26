@@ -27,17 +27,24 @@
         </details>
         <div class="user-area">
             {% if user.is_authenticated %}
-                <span class="user-name">{{ user.username }}</span>
-                <form action="{% url 'logout' %}" method="post" class="logout-form">
+                <a class="user-name" href="{% url 'socialaccount_connections' %}">{{ user.username }}</a>
+                <form action="{% url 'account_logout' %}" method="post" class="logout-form">
                     {% csrf_token %}
                     <button type="submit" class="logout-link">Выйти</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}" class="login-link">Войти</a>
+                <a href="{% url 'account_login' %}" class="login-link">Войти</a>
             {% endif %}
         </div>
 </header>
 <main>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     {% block content %}{% endblock %}
 </main>
 {% block extra_js %}{% endblock %}
