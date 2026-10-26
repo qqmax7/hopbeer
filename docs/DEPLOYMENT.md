@@ -198,7 +198,7 @@ systemctl restart tproxy-server mtproxy
 | Название вашего сервиса | `HopBeer` (видно пользователю на странице согласия) |
 | Контактная почта | почта владельца |
 | Redirect URI | `https://max.evgdan.ru/accounts/yandex/login/callback/`; второй строкой — `http://127.0.0.1:8000/accounts/yandex/login/callback/`, если проверяете вход локально |
-| Suggest hostname (подсказка адреса) | подставляет адрес разработки; подсказку можно не брать и вписать callback вручную — важен именно полный путь `/accounts/yandex/login/callback/`, иначе Django ответит ошибкой `redirect_uri` |
+| Suggest hostname | Хост страницы, где размещён элемент входа. В production это `max.evgdan.ru` (страница `/accounts/login/`); для локальной проверки — `127.0.0.1` (порт `8000`), если консоль позволяет добавить этот хост. Это поле не callback URL: полный callback задаётся отдельно в Redirect URI. В HopBeer используется обычная ссылка на OAuth, а не suggest-виджет. |
 | Доступ к данным | «Адрес электронной почты» и «Логин, имя и фамилия, пол»; портрет, телефон и дата рождения не нужны |
 
 Yandex сравнивает в `Redirect URI` схему, хост, порт и путь, поэтому
