@@ -5,9 +5,11 @@
 
 {% block content %}
 <h1>Пиво</h1>
+{% if user.is_staff %}
 <div class="list-actions">
     <a class="button" href="{% url 'beer_create' %}">Добавить пиво</a>
 </div>
+{% endif %}
 <ul class="card-list">
     {% for beer in beers %}
     <li class="card">
@@ -48,10 +50,12 @@
             {% for hop in beer.hops.all %}{{ hop.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
         </p>
         {% endif %}
+        {% if user.is_staff %}
         <div class="actions">
             <a href="{% url 'beer_update' beer.pk %}">Изменить</a> |
             <a href="{% url 'beer_delete' beer.pk %}">Удалить</a>
         </div>
+        {% endif %}
     </li>
     {% empty %}
     <li class="empty">Пока нет записей.</li>

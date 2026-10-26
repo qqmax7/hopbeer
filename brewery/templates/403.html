@@ -1,0 +1,9 @@
+{% extends 'brewery/base.html' %}
+
+{% block title %}Недостаточно прав{% endblock %}
+
+{% block content %}
+<h1>Недостаточно прав</h1>
+<p>Изменять каталог может только администратор.</p>
+<p><a class="button" href="{% url 'index' %}">← На главную</a></p>
+{% endblock %}

@@ -4,9 +4,11 @@
 
 {% block content %}
 <h1>Производители</h1>
+{% if user.is_staff %}
 <div class="list-actions">
     <a class="button" href="{% url 'vendor_create' %}">Добавить производителя</a>
 </div>
+{% endif %}
 <ul class="card-list">
     {% for vendor in vendors %}
     <li class="card">
@@ -17,10 +19,12 @@
             {% if vendor.website %}<span><a href="{{ vendor.website }}">{{ vendor.website }}</a></span>{% endif %}
         </div>
         {% if vendor.description %}<p class="meta">{{ vendor.description }}</p>{% endif %}
+        {% if user.is_staff %}
         <div class="actions">
             <a href="{% url 'vendor_update' vendor.pk %}">Изменить</a> |
             <a href="{% url 'vendor_delete' vendor.pk %}">Удалить</a>
         </div>
+        {% endif %}
     </li>
     {% empty %}
     <li class="empty">Пока нет записей.</li>

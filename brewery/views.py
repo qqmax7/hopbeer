@@ -1,14 +1,55 @@
 """Представления приложения brewery (CRUD для всех моделей)."""
 import json
+import logging
 
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Avg, Count, F, Prefetch
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import BeerForm, HopForm, RatingForm, VendorForm
 from .models import Beer, Hop, Rating, Vendor
+
+logger = logging.getLogger('brewery')
+
+
+class StaffOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Вход обязателен; изменять каталог может только staff-пользователь."""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            logger.warning(
+                'Отказ в правах: %s %s (пользователь: %s)',
+                self.request.method,
+                self.request.path,
+                self.request.user.get_username(),
+            )
+        return super().handle_no_permission()
+
+
+class OwnRatingMixin:
+    """Пользователь работает только со своими оценками; чужая — 404."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(owner=self.request.user)
+
+    def get_object(self, queryset=None):
+        try:
+            return super().get_object(queryset)
+        except Http404:
+            logger.warning(
+                'Чужая или недоступная оценка: %s %s (пользователь: %s)',
+                self.request.method,
+                self.request.path,
+                self.request.user.get_username(),
+            )
+            raise
+
 
 # ---------- Vendor ----------
 class VendorListView(LoginRequiredMixin, ListView):
@@ -17,21 +58,21 @@ class VendorListView(LoginRequiredMixin, ListView):
     context_object_name = 'vendors'
 
 
-class VendorCreateView(LoginRequiredMixin, CreateView):
+class VendorCreateView(StaffOnlyMixin, CreateView):
     model = Vendor
     form_class = VendorForm
     template_name = 'brewery/vendor_form.html'
     success_url = reverse_lazy('vendor_list')
 
 
-class VendorUpdateView(LoginRequiredMixin, UpdateView):
+class VendorUpdateView(StaffOnlyMixin, UpdateView):
     model = Vendor
     form_class = VendorForm
     template_name = 'brewery/vendor_form.html'
     success_url = reverse_lazy('vendor_list')
 
 
-class VendorDeleteView(LoginRequiredMixin, DeleteView):
+class VendorDeleteView(StaffOnlyMixin, DeleteView):
     model = Vendor
     template_name = 'brewery/vendor_confirm_delete.html'
     success_url = reverse_lazy('vendor_list')
@@ -44,21 +85,21 @@ class HopListView(LoginRequiredMixin, ListView):
     context_object_name = 'hops'
 
 
-class HopCreateView(LoginRequiredMixin, CreateView):
+class HopCreateView(StaffOnlyMixin, CreateView):
     model = Hop
     form_class = HopForm
     template_name = 'brewery/hop_form.html'
     success_url = reverse_lazy('hop_list')
 
 
-class HopUpdateView(LoginRequiredMixin, UpdateView):
+class HopUpdateView(StaffOnlyMixin, UpdateView):
     model = Hop
     form_class = HopForm
     template_name = 'brewery/hop_form.html'
     success_url = reverse_lazy('hop_list')
 
 
-class HopDeleteView(LoginRequiredMixin, DeleteView):
+class HopDeleteView(StaffOnlyMixin, DeleteView):
     model = Hop
     template_name = 'brewery/hop_confirm_delete.html'
     success_url = reverse_lazy('hop_list')
@@ -110,21 +151,21 @@ class HopsJsonMixin:
         return ctx
 
 
-class BeerCreateView(LoginRequiredMixin, HopsJsonMixin, CreateView):
+class BeerCreateView(StaffOnlyMixin, HopsJsonMixin, CreateView):
     model = Beer
     form_class = BeerForm
     template_name = 'brewery/beer_form.html'
     success_url = reverse_lazy('beer_list')
 
 
-class BeerUpdateView(LoginRequiredMixin, HopsJsonMixin, UpdateView):
+class BeerUpdateView(StaffOnlyMixin, HopsJsonMixin, UpdateView):
     model = Beer
     form_class = BeerForm
     template_name = 'brewery/beer_form.html'
     success_url = reverse_lazy('beer_list')
 
 
-class BeerDeleteView(LoginRequiredMixin, DeleteView):
+class BeerDeleteView(StaffOnlyMixin, DeleteView):
     model = Beer
     template_name = 'brewery/beer_confirm_delete.html'
     success_url = reverse_lazy('beer_list')
@@ -168,14 +209,14 @@ class RatingCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class RatingUpdateView(LoginRequiredMixin, UpdateView):
+class RatingUpdateView(OwnRatingMixin, LoginRequiredMixin, UpdateView):
     model = Rating
     form_class = RatingForm
     template_name = 'brewery/rating_form.html'
     success_url = reverse_lazy('rating_list')
 
 
-class RatingDeleteView(LoginRequiredMixin, DeleteView):
+class RatingDeleteView(OwnRatingMixin, LoginRequiredMixin, DeleteView):
     model = Rating
     template_name = 'brewery/rating_confirm_delete.html'
     success_url = reverse_lazy('rating_list')

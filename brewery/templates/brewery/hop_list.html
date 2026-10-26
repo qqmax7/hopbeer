@@ -4,9 +4,11 @@
 
 {% block content %}
 <h1>Хмель</h1>
+{% if user.is_staff %}
 <div class="list-actions">
     <a class="button" href="{% url 'hop_create' %}">Добавить хмель</a>
 </div>
+{% endif %}
 <ul class="card-list">
     {% for hop in hops %}
     <li class="card">
@@ -17,10 +19,12 @@
             <span>АК {{ hop.alpha_acid|default:"—" }}%</span>
         </div>
         {% if hop.aroma %}<p class="meta">{{ hop.aroma }}</p>{% endif %}
+        {% if user.is_staff %}
         <div class="actions">
             <a href="{% url 'hop_update' hop.pk %}">Изменить</a> |
             <a href="{% url 'hop_delete' hop.pk %}">Удалить</a>
         </div>
+        {% endif %}
     </li>
     {% empty %}
     <li class="empty">Пока нет записей.</li>

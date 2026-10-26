@@ -17,10 +17,12 @@
             <span>{{ rating.created_at|date:"d.m.Y H:i" }}</span>
         </div>
         {% if rating.comment %}<p class="meta">{{ rating.comment }}</p>{% endif %}
+        {% if rating.owner_id == user.id %}
         <div class="actions">
             <a href="{% url 'rating_update' rating.pk %}">Изменить</a> |
             <a href="{% url 'rating_delete' rating.pk %}">Удалить</a>
         </div>
+        {% endif %}
     </li>
     {% empty %}
     <li class="empty">У вас пока нет оценок.</li>
