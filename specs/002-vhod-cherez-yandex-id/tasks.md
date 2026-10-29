@@ -47,8 +47,8 @@
 - [x] T-022 `manage.py check` — без предупреждений (AC-021)
 - [ ] T-023 Ручная проверка локально с настоящим Yandex ID: вход, повторный вход, конфликт email, привязка и отвязка, отмена (AC-024) — нужны ключи из T-004
 - [x] T-024 Обновить `docs/DEPLOYMENT.md`: переменные окружения, callback URL, порядок выката и откат (раздел 6.2) (AC-024)
-- [ ] T-025 Бэкап `db.sqlite3` и `media/` перед выкатом (FR-016)
-- [ ] T-026 Выкат: `git pull`, `pip install -r requirements.txt`, `migrate`, `collectstatic`, рестарт `hopbeer`
+- [x] T-025 Бэкап `db.sqlite3`, `media/` и `.env` перед выкатом в `/root/hopbeer-deploy-backups/20261029T194755Z` (FR-016)
+- [x] T-026 Выкат commit `84587c4`: ветка `kodik/spec-002-vhod-cherez-yandex-id`, `pip install -r requirements.txt`, `manage.py check`, `migrate`, `collectstatic`, рестарт `hopbeer` (2026-10-29)
 - [ ] T-027 Проверка на проде: редирект гостя, вход по паролю, вход через Yandex, `/privacy/`, отсутствие секретов в логах (AC-024)
 - [x] T-028 Обновить `specs/backlog.md`: BL-09 → ссылка на `SPEC-002`
 - [x] T-029 Зафиксировать конвенцию соцвхода в `AGENTS.md`
