@@ -20,7 +20,7 @@ urlpatterns += [
     # Имя `login` сохранено для совместимости: на него ссылаются шаблоны и тесты,
     # написанные до переезда на allauth (SPEC-002 FR-001).
     path('accounts/login/', account_views.login, name='login'),
-    # Прямой старт OAuth без ключей не должен падать: редирект на страницу входа.
+    # Без ключей старт OAuth возвращает на страницу входа с сообщением об ошибке (FR-010).
     path('accounts/yandex/login/', brewery_views.yandex_login_start, name='yandex_login'),
     # Связи с аккаунтами: своё представление добавляет список связей в контекст.
     path(

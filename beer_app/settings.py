@@ -229,7 +229,8 @@ LOGOUT_REDIRECT_URL = 'index'
 # Ключи приложения Yandex — только из окружения: в репозитории, БД и логах их нет.
 YANDEX_CLIENT_ID = os.environ.get('YANDEX_CLIENT_ID', '')
 YANDEX_CLIENT_SECRET = os.environ.get('YANDEX_CLIENT_SECRET', '')
-# Без ключей кнопка входа не показывается, а приложение работает как раньше.
+# Флаг доступности OAuth; кнопка входа показывается и без ключей, но старт
+# OAuth без них возвращает понятную ошибку, а не техническую страницу.
 YANDEX_OAUTH_ENABLED = bool(YANDEX_CLIENT_ID and YANDEX_CLIENT_SECRET)
 
 if YANDEX_OAUTH_ENABLED:

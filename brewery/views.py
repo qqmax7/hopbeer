@@ -5,11 +5,13 @@ import logging
 from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.views import ConnectionsView as AllauthConnectionsView
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Avg, Count, F, Prefetch
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils.http import urlencode
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from .forms import BeerForm, HopForm, RatingForm, VendorForm
@@ -299,13 +301,26 @@ class ReportView(LoginRequiredMixin, TemplateView):
 
 # ---------- Вход через Yandex ID (SPEC-002) ----------
 def yandex_login_start(request):
-    """Старт OAuth в Yandex; без ключей — возврат на страницу входа.
+    """Старт OAuth в Yandex; без ключей вернуть понятную ошибку на страницу входа.
 
-    Без переменных окружения у провайдера нет приложения, и библиотека
-    падала бы на нём. Гость вместо ошибки попадает на обычный вход (FR-012).
+    Кнопка входа показывается независимо от конфигурации. Если ключей нет,
+    провайдер не настроен и allauth завершил бы запрос технической ошибкой;
+    вместо этого показываем сообщение по FR-010, не меняя локальную сессию.
     """
     if not settings.YANDEX_OAUTH_ENABLED:
-        return redirect('account_login')
+        logger.warning(
+            'Соцвход не удался: провайдер=yandex, результат=credentials_missing'
+        )
+        messages.error(
+            request,
+            'Вход через Yandex ID отменён или не удался. '
+            'Попробуйте ещё раз или войдите по логину и паролю.',
+        )
+        login_url = reverse('account_login')
+        next_url = request.GET.get('next')
+        if next_url:
+            login_url = f'{login_url}?{urlencode({"next": next_url})}'
+        return redirect(login_url)
     from allauth.socialaccount.providers.yandex.views import oauth2_login
 
     return oauth2_login(request)

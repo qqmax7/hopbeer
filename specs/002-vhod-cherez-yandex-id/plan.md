@@ -31,9 +31,10 @@
   перед `include('allauth.urls')` стоит `path('accounts/login/', account_views.login,
   name='login')`. Адрес и представление те же, что у `account_login`, но
   существующие тесты и `reverse('login')` продолжают работать без правок.
-- **Прямой `/accounts/yandex/login/` без ключей** уводит на страницу входа:
-  без `SocialApp` библиотека подняла бы исключение (500). Тонкая обёртка
-  `brewery.views.yandex_login_start` проверяет `YANDEX_OAUTH_ENABLED`.
+- **Прямой `/accounts/yandex/login/` без ключей** уводит на страницу входа с
+  сообщением об ошибке по FR-010: без конфигурации библиотека подняла бы
+  исключение (500). Тонкая обёртка `brewery.views.yandex_login_start` проверяет
+  `YANDEX_OAUTH_ENABLED`; кнопка на странице входа видна и без ключей.
 - **Перекрытие шаблонов** — через порядок `INSTALLED_APPS`: `brewery` стоит
   **раньше** приложений allauth, поэтому `brewery/templates/account/*` и
   `brewery/templates/socialaccount/*` находятся первыми (`APP_DIRS=True`).
@@ -75,10 +76,10 @@
   `social_account_removed` для успешных сценариев; пишем в существующий логгер
   `brewery` (`beer_app/settings.py:196-200`), без токенов, кодов и секретов
   (FR-014).
-- **Кнопка провайдера показывается только при заданных ключах**: флаг
-  `YANDEX_OAUTH_ENABLED`, вычисляемый из наличия переменных окружения. Это
-  делает локальную разработку, тесты и свежий клон работоспособными без ключей
-  (FR-012, AC-016).
+- **Кнопка входа через Yandex показывается всегда**. `YANDEX_OAUTH_ENABLED`
+  только определяет, можно ли запустить OAuth: если ключей нет, обработчик
+  сообщает об ошибке по FR-010 и возвращает на вход, не выдавая 500; вход по
+  паролю остаётся доступен (FR-010, FR-012, AC-016).
 - **Учётные записи из соцвхода не имеют рабочего пароля** — штатное поведение
   allauth (`set_unusable_password()`), отдельного кода не требуется (FR-004).
 - **Политика конфиденциальности** — обычное `TemplateView` без
@@ -115,7 +116,7 @@
 | `brewery/context_processors.py` | новый: флаг `YANDEX_OAUTH_ENABLED` в шаблонах | AC-002, AC-016 |
 | `brewery/views.py` | `yandex_login_start`, `ConnectionsView` (список связей в контексте), `PrivacyView` | AC-012, AC-016, AC-017 |
 | `brewery/urls.py` | маршрут `/privacy/` (публичный) | AC-017 |
-| `brewery/templates/account/login.html` | страница входа в стиле проекта: кнопка «Войти через Yandex ID» (по флагу), форма логина, ссылка на политику; заменяет `registration/login.html` | AC-002, AC-016, AC-017 |
+| `brewery/templates/account/login.html` | страница входа в стиле проекта: кнопка «Войти через Yandex ID» независимо от ключей, форма логина, ссылка на политику; заменяет `registration/login.html` | AC-002, AC-016, AC-017 |
 | `brewery/templates/account/logout.html` | страница подтверждения выхода из allauth (POST-форма) | AC-023 |
 | `brewery/templates/socialaccount/connections.html` | заголовок «Связи с аккаунтами», список связей, пустое состояние, кнопки подключения/отвязки | AC-009…AC-012 |
 | `brewery/templates/socialaccount/messages/account_connected.txt`, `…/account_disconnected.txt` | тексты сообщений о подключении и отвязке из `spec.md` §6 | AC-010, AC-011 |
@@ -156,7 +157,7 @@
 |---|---|---|
 | `/accounts/login/` | `account_login` | вход по логину и паролю + кнопка Yandex (FR-001, FR-002) |
 | `/accounts/logout/` | `account_logout` | выход POST-формой (FR-001, AC-023) |
-| `/accounts/yandex/login/` | `yandex_login` | старт OAuth, в том числе `?process=connect` (FR-002, FR-008); без ключей — редирект на вход |
+| `/accounts/yandex/login/` | `yandex_login` | старт OAuth, в том числе `?process=connect` (FR-002, FR-008); без ключей — сообщение об ошибке и редирект на вход (FR-010) |
 | `/accounts/yandex/login/callback/` | `yandex_callback` | callback провайдера (AC-003, AC-004) |
 | `/accounts/3rdparty/` | `socialaccount_connections` | связи с аккаунтами (FR-007) |
 | `/accounts/signup/` | `account_signup` | заглушка: редирект на вход (Non-goals) |
@@ -298,7 +299,7 @@ allauth (`HopBeerSocialAccountAdapter.get_requests_session`) подменяют�
 | AC-013 | `test_provider_cancel_keeps_guest_on_login_page` | `YandexLoginTests` | Django TestCase |
 | AC-014 | `test_provider_error_shows_message_not_500` | `YandexLoginTests` | Django TestCase |
 | AC-015 | `test_missing_email_does_not_create_account` | `YandexLoginTests` | Django TestCase |
-| AC-016 | `test_yandex_button_hidden_without_credentials` | `YandexLoginTests` | Django TestCase |
+| AC-016 | `test_yandex_button_visible_without_credentials_and_fails_gracefully` | `YandexLoginTests` | Django TestCase |
 | AC-017 | `test_privacy_page_is_public_and_describes_data` | `PrivacyPolicyTests` | Django TestCase |
 | AC-018 | `test_social_login_failure_is_logged_without_secrets` | `SocialLoginLoggingTests` | Django TestCase (`assertLogs('brewery', 'WARNING')`) |
 | AC-019 | `test_social_login_success_is_logged` | `SocialLoginLoggingTests` | Django TestCase (`assertLogs('brewery', 'INFO')`) |

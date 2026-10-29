@@ -813,21 +813,45 @@ class YandexLoginTests(YandexOAuthHelpers, TestCase):
         self.assertContains(page, 'Yandex не передал адрес электронной почты')
 
     @override_settings(YANDEX_OAUTH_ENABLED=False, SOCIALACCOUNT_PROVIDERS={})
-    def test_yandex_button_hidden_without_credentials(self):
-        response = self.client.get(reverse('account_login'))
+    def test_yandex_button_visible_without_credentials_and_fails_gracefully(self):
+        login_url = reverse('account_login')
+        response = self.client.get(login_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Войти через Yandex ID')
+        self.assertContains(response, 'Войти через Yandex ID')
         self.assertContains(response, 'name="password"')
-        user = User.objects.create_user(username='local', password='pass12345')
-        login_response = self.client.post(
-            reverse('account_login'), {'login': 'local', 'password': 'pass12345'}
-        )
-        self.assertEqual(login_response.status_code, 302)
-        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
-        start_response = self.client.get(reverse('yandex_login'))
+
+        with self.assertLogs('brewery', level='WARNING') as logs:
+            start_response = self.client.get(
+                reverse('yandex_login'), {'next': reverse('beer_list')}
+            )
         self.assertEqual(start_response.status_code, 302)
-        self.assertEqual(start_response['Location'], reverse('account_login'))
+        self.assertIn(login_url, start_response['Location'])
+        self.assertEqual(
+            parse_qs(urlparse(start_response['Location']).query)['next'],
+            [reverse('beer_list')],
+        )
+        self.assertTrue(
+            any('провайдер=yandex' in record for record in logs.output)
+        )
+        self.assertTrue(
+            any('credentials_missing' in record for record in logs.output)
+        )
+
+        failure_page = self.client.get(start_response['Location'])
+        self.assertContains(
+            failure_page, 'Вход через Yandex ID отменён или не удался'
+        )
+        self.assertContains(failure_page, 'Войти через Yandex ID')
+        self.assertContains(failure_page, 'name="password"')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+        user = User.objects.create_user(username='local', password='pass12345')
+        password_login = self.client.post(
+            login_url, {'login': 'local', 'password': 'pass12345'}
+        )
+        self.assertEqual(password_login.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
 
     def test_existing_user_keeps_password_login_after_migrations(self):
         user = User.objects.create_user(

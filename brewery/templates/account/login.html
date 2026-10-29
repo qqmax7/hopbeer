@@ -7,12 +7,10 @@
 {% if form.non_field_errors %}
 <p class="error">Неверное имя пользователя или пароль.</p>
 {% endif %}
-{% if YANDEX_OAUTH_ENABLED %}
 <p class="social-login">
     <a class="button" href="{% url 'yandex_login' %}{% if redirect_field_value %}?next={{ redirect_field_value|urlencode }}{% endif %}">Войти через Yandex ID</a>
 </p>
 <p>или</p>
-{% endif %}
 <form method="post" action="{% url 'account_login' %}">
     {% csrf_token %}
     {% if redirect_field_value %}
